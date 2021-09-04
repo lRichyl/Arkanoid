@@ -27,7 +27,7 @@ struct Batch{
      unsigned int vertices_index = 0;
      int number_of_quads_to_copy = 0;
      int total_indices_to_draw = 0;
-     unsigned int registered_textures_ids[120] = {};// This is just a hardcoded random limit 
+     unsigned int registered_textures_ids[120] = {};// This is just a hardcoded random limit
      ShaderProgram shader_program;
      // float vertex_buffer[16] = {-0.8f, 0.8f,
      //                          -0.8f, 0.0f,
@@ -65,7 +65,7 @@ struct Rect{
 };
 
 Renderer* create_renderer(Window *window);
-void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL);
+void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false);
 Texture make_texture(const char *path);
 void renderer_draw(Renderer *renderer);
 void destroy_renderer(Renderer *renderer);

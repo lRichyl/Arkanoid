@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "timer.h"
 #include "game.h"
+#include <cmath>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -18,6 +19,10 @@ int main(){
      glViewport(0,0,window->width,window->height);
 
      Renderer *renderer = create_renderer(window);
+     if(!renderer){
+          printf("Error creating the renderer\n");
+          exit(0);
+     }
 
      float fixed_fps = 60.0f;
      float dt_in_ms = 1.0f / fixed_fps * 1000.0f;
@@ -28,6 +33,7 @@ int main(){
      LARGE_INTEGER start_time = get_time_counter();
 
      Game game;
+
      while(!glfwWindowShouldClose(window->w)){
           glClear(GL_COLOR_BUFFER_BIT);
 
@@ -53,7 +59,7 @@ int main(){
                }
           }
           dt = ms_per_frame / 1000.0f;
-          int fps = 1.0f/((waited_time + ms_per_frame)/1000.0f);
+          int fps = round(1.0f/((waited_time + ms_per_frame)/1000.0f));
           printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
      }
      glfwTerminate();

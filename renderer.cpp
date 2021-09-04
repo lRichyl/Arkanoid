@@ -119,12 +119,12 @@ void destroy_renderer(Renderer *renderer){
      delete renderer;
 }
 
-void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region){
+void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirror){
      Window *win = renderer->window;
-     v2 top_left_clip;
-     v2 bottom_left_clip;
-     v2 top_right_clip;
-     v2 bottom_right_clip;
+     V2 top_left_clip;
+     V2 bottom_left_clip;
+     V2 top_right_clip;
+     V2 bottom_right_clip;
 
      if(clip_region){
           assert(clip_region->w < texture->width);
@@ -147,6 +147,12 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
           bottom_right_clip.y = 0.0f;
           top_right_clip.x    = 1.0f;
           top_right_clip.y    = 1.0f;
+
+
+     }
+     if(mirror){
+          V2::SwitchXComponents(&top_left_clip, &top_right_clip);
+          V2::SwitchXComponents(&bottom_left_clip, &bottom_right_clip);
      }
 
      //We do this so that if we try to draw outside the window we don't add data to the vertex bufer.

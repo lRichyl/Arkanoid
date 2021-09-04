@@ -1,8 +1,10 @@
 #include "renderer.h"
 #include "game.h"
 
-float v = 100.0f;
-float pos_x = 0;
+Game::Game(){
+
+}
+
 void Game::UpdateGame(float dt, Renderer *renderer){
 
 
@@ -13,8 +15,8 @@ void Game::DrawGame(Renderer *renderer, Window *window){
      //Right now we only draw the main batch, which can have 1000 quads with as many textures units as the
      //system can handle.
      //TODO: Add more batches to draw on when we run out of texture units or surpass 1000 quads.
-     static Texture smiley = make_texture("assets/textures/smile.png");
-     render_quad(renderer, &position, &smiley, &clip);
+     render_quad(renderer, &position, &smiley, &clip, false);
+     render_quad(renderer, &position1, &smiley, &clip, true);
      renderer_draw(renderer);
 
      swap_buffers(window);
