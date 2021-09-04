@@ -1,0 +1,19 @@
+#version 330 core
+
+out vec4 fragColor;
+in vec2 outTexCoord;
+in float outTexID;
+
+//uniform vec4 u_Color;
+uniform sampler2D u_textures[32];
+uniform int u_max_texture_units;
+
+void main()
+{
+	for(int i = 0; i < u_max_texture_units; i++){
+		if(i == int(outTexID)){
+			fragColor = texture2D(u_textures[i], outTexCoord);
+			break;
+		}
+	}
+}
