@@ -1,3 +1,6 @@
 *.bat
 *.json
 /build
+*.exe
+*.ilk
+*.pdb
