@@ -126,9 +126,10 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
      V2 top_right_clip;
      V2 bottom_right_clip;
 
+     //The clip_region is used to select a part of a texture that we want to render.
      if(clip_region){
-          assert(clip_region->w < texture->width);
-          assert(clip_region->h < texture->height);
+          assert(clip_region->w <= texture->width);
+          assert(clip_region->h <= texture->height);
 
           top_left_clip.x     = clip_region->x / texture->width;
           top_left_clip.y     = (clip_region->y + clip_region->h) / texture->height;
@@ -172,9 +173,9 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
                     }
                }
           }
+          // printf("%d %d", current_batch->texture_index, RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH);
+          assert(current_batch->texture_index <= RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH);
 
-          assert(current_batch->texture_index + 1 < RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH);
-          // printf("%d", current_batch->texture_index);
 
           current_batch->vertex_buffer[current_batch->vertices_index] = position->x;
           current_batch->vertex_buffer[current_batch->vertices_index + 1] = position->y;
@@ -212,6 +213,8 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
                     current_batch->vertices_index += 20;
                     current_batch->number_of_quads_to_copy++;
                     current_batch->total_indices_to_draw += 6;
+
+                    assert(current_batch->number_of_quads_to_copy <= RendererInfo::QUADS_PER_BATCH);
 
      }
 }

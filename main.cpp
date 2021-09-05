@@ -7,6 +7,8 @@
 #include "timer.h"
 #include "game.h"
 #include <cmath>
+#include <chrono>
+#include <thread>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -61,6 +63,7 @@ int main(){
           dt = ms_per_frame / 1000.0f;
           int fps = round(1.0f/((waited_time + ms_per_frame)/1000.0f));
           printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
+          Sleep(1);
      }
      glfwTerminate();
      destroy_window(window);

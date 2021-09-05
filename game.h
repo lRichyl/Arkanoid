@@ -8,6 +8,7 @@ struct Game{
      void GameLoop(float dt, Renderer *renderer, Window *window);
      Game();
 
+     Texture arkanoidBlocks = make_texture("assets/textures/Arkanoid blocks.png");
      Texture smiley = make_texture("assets/textures/smiley.png");
 };
 
