@@ -1,11 +1,9 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
 #include "gtc/type_ptr.hpp"
 #include "window.h"
-#include <vector>
 
 struct RendererInfo{
      static const int QUADS_PER_BATCH = 1000;

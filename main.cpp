@@ -1,14 +1,10 @@
 #include "glad/glad.h"
 #include <stdio.h>
 #include <windows.h>
-// #include "utilities.h"
-#include "window.h"
 #include "renderer.h"
 #include "timer.h"
 #include "game.h"
 #include <cmath>
-#include <chrono>
-#include <thread>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -43,7 +39,7 @@ int main(){
 
           LARGE_INTEGER end_time = get_time_counter();
           float ms_per_frame = get_time_in_ms(start_time, end_time, perf_count_frequency);
-          printf("Real FPS: %f ", 1.f/(ms_per_frame/1000.f));
+          //printf("Real FPS: %f ", 1.f/(ms_per_frame/1000.f));
           start_time = end_time;
 
           float time_to_wait_for_next_frame = dt_in_ms - ms_per_frame;
@@ -62,7 +58,7 @@ int main(){
           }
           dt = ms_per_frame / 1000.0f;
           int fps = round(1.0f/((waited_time + ms_per_frame)/1000.0f));
-          printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
+          //printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
           Sleep(1);
      }
      glfwTerminate();

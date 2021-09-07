@@ -305,6 +305,7 @@ Texture make_texture(const char *path){
           exit(-1);
      }
      glGenTextures(1, &texture.id);
+     // printf("Texture ID: %d\n", texture.id);
      glBindTexture(GL_TEXTURE_2D, texture.id);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
