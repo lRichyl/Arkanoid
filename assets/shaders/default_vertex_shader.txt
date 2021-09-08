@@ -3,9 +3,11 @@
 layout(location = 0) in vec2 position;
 layout(location = 1) in vec2 texCoord;
 layout(location = 2) in float texID;
+layout(location = 3) in float alphaValue;
 
 out vec2 outTexCoord;
 out float outTexID;
+out float outAlphaValue;
 
 uniform mat4 u_projection;
 uniform mat4 u_view;
@@ -15,4 +17,5 @@ void main()
     gl_Position = u_projection * u_view * vec4(position, 0.0f, 1.0f);
     outTexCoord = texCoord;
     outTexID = texID;
+    outAlphaValue = alphaValue;
 }
