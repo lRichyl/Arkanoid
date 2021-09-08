@@ -17,23 +17,34 @@ enum Blocks{
 struct Entity{
      Rect boundingBox = {};
      Rect clippingBox = {};
+     Texture texture;
+
+     void Draw(Renderer *renderer){
+          render_quad(renderer, &boundingBox, &texture, &clippingBox);
+     }
 };
 
-struct Block : public Entity{
+// struct Block : public Entity{
+//
+//      void Init(V2 bBox, Rect clipBox, Texture t){
+//           boundingBox = {bBox.x, bBox.y, size.x, size.y};
+//           clippingBox = clipBox;
+//           texture = t;
+//      }
+//
+//
+//      Texture texture;
+// };
 
-     void Init(V2 bBox, Rect clipBox, Texture t){
-          boundingBox = {bBox.x, bBox.y, size.x, size.y};
-          clippingBox = clipBox;
+struct Ball : public Entity{
+     void Init(V2 position, Texture t){
+          boundingBox = {position.x, position.y, 16, 12};
+          clippingBox = {9 , 9, 8 , 6};
           texture = t;
      }
-
-     void Update(float dt, Renderer *renderer);
-     void Draw(Renderer *renderer);
-
-     const V2 size = {48, 16};
-     Texture texture;
+     // Texture = texture;
+     V2 velocity = {};
 };
-
 struct Paddle : public Entity{
      void Init(V2 position, Texture t){
           boundingBox = {position.x, position.y, 64, 16};
@@ -42,11 +53,11 @@ struct Paddle : public Entity{
      }
 
      void Update(float dt, Renderer *renderer);
-     void Draw(Renderer *renderer);
+     // void Draw(Renderer *renderer);
 
      V2 direction = {};
      float speed = 300;
-     Texture texture;
+     // Texture texture;
 };
 
 #endif

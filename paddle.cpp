@@ -28,7 +28,7 @@ void Paddle::Update(float dt, Renderer *renderer){
 
      }
 }
-
-void Paddle::Draw(Renderer *renderer){
-     render_quad(renderer, &boundingBox, &texture, &clippingBox);
-}
+// 
+// void Paddle::Draw(Renderer *renderer){
+//      render_quad(renderer, &boundingBox, &texture, &clippingBox);
+// }
