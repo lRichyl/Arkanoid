@@ -1,4 +1,4 @@
-#include "glad/glad.h"
+
 #include <stdio.h>
 #include <windows.h>
 #include "renderer.h"
@@ -24,7 +24,7 @@ int main(){
 
      float fixed_fps = 60.0f;
      float dt_in_ms = 1.0f / fixed_fps * 1000.0f;
-     float dt;
+     float dt = 0;
      //printf("%f", dt);
 
      long long perf_count_frequency = get_performance_counter_frequency();
@@ -34,8 +34,10 @@ int main(){
      bool showFPS = false;
      while(!glfwWindowShouldClose(window->w)){
           glClear(GL_COLOR_BUFFER_BIT);
+          if(dt > 0){
+               game.GameLoop(dt);
 
-          game.GameLoop(dt);
+          }
 
           LARGE_INTEGER end_time = get_time_counter();
           float ms_per_frame = get_time_in_ms(start_time, end_time, perf_count_frequency);

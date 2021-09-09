@@ -63,8 +63,8 @@ void initialize_batch_vertex_buffers_and_arrays(Batch *batch, Renderer *renderer
 void initialize_batch_texture_sampler(Batch *batch){
      glUseProgram(batch->shader_program.id);
      int max_texture_units;
-     RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH = max_texture_units;
      glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_texture_units);
+     RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH = max_texture_units;
      int max_texture_units_id = glGetUniformLocation(batch->shader_program.id, "u_max_texture_units");
      glUniform1i(max_texture_units_id, max_texture_units);
      // printf("%d", max_texture_units);

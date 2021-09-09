@@ -12,8 +12,10 @@ struct Game{
      void GameLoop(float dt);
      Game(Renderer *r, Window *w);
 
-     void DrawLevel();
+     void DrawCurrentLevel();
      void DrawBall();
+     void CalculateNumberOfBlocksToWin();
+     void DoBallCollisionWithBlocks(float dt);
 
      Renderer *renderer;
      Window *window;
@@ -30,16 +32,31 @@ struct Game{
      Ball ball;
      static const int levelWidth = 12;
      static const int levelHeight = 7;
+     static const int numberOfLevels = 5;
      static constexpr V2 blockSize = {63, 32};
+     int *levelList[numberOfLevels];
+     int *currentLevel;
+     int numberOfBlocksToWin = 0;
+     V2 levelOffset = {22, 30};
 
-
-     static constexpr int level1[levelWidth * levelHeight] ={0,0,0,0,0,0,0,0,0,0,0,0,
+     int level1[levelWidth * levelHeight] ={0,0,0,0,0,0,0,0,0,0,0,0,
                                      1,1,1,1,1,1,1,1,1,1,1,1,
                                      2,2,2,2,2,2,2,2,2,2,2,2,
                                      3,3,3,3,3,3,3,3,3,3,3,3,
                                      4,4,4,4,4,4,4,4,4,4,4,4,
                                      5,5,5,5,5,5,5,5,5,5,5,5,
                                      6,6,6,6,6,6,6,6,6,6,6,6};
+
+
+
+     int blockStateMap[levelWidth * levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
+                                  1,1,1,1,1,1,1,1,1,1,1,1,
+                                  1,1,1,1,1,1,1,1,1,1,1,1,
+                                  1,1,1,1,1,1,1,1,1,1,1,1,
+                                  1,1,1,1,1,1,1,1,1,1,1,1,
+                                  1,1,1,1,1,1,1,1,1,1,1,1,
+                                  1,1,1,1,1,1,1,1,1,1,1,1};
+
 
 };
 
