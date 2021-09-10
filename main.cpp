@@ -9,6 +9,12 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+
+bool doGameLoop = true;
+void WindowResizeCallback(GLFWwindow* window, int width, int height){
+     glViewport(0, 0, width, height);
+}
+
 int main(){
      Window *window;
      window = create_window(800, 600, "Game Engine");
@@ -31,10 +37,20 @@ int main(){
      LARGE_INTEGER start_time = get_time_counter();
 
      Game game = Game(renderer, window);
-     bool showFPS = false;
+     bool showFPS = true;
+     glfwSetWindowSizeCallback(window->w,WindowResizeCallback);
      while(!glfwWindowShouldClose(window->w)){
           glClear(GL_COLOR_BUFFER_BIT);
-          if(dt > 0){
+          // if(dt > 0.017){
+          //      printf("%f", dt);
+          //      continue;
+          // }
+          //This is done because when we select the window it stops the execution of
+          //the program so the next time we get the current time and calculate dt
+          //it will be so big that physics break.
+          //The correct way to do this would be to poll the events on another thread because
+          //windows doesn't get out of the message loop until you stop grabbing the window.
+          if(dt > 0 && dt < 0.1){
                game.GameLoop(dt);
 
           }
@@ -64,6 +80,11 @@ int main(){
                printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
           }
           Sleep(1);
+
+
+
+
+          // doGameLoop = true;
      }
      glfwTerminate();
      destroy_window(window);

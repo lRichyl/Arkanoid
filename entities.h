@@ -35,18 +35,6 @@ struct Entity{
 //
 //      Texture texture;
 // };
-struct Ball : public Entity{
-     void Init(V2 position, Texture t){
-          boundingBox = {position.x, position.y, 16, 12};
-          clippingBox = {9 , 9, 8 , 6};
-          texture = t;
-          velocity.y = speed;
-     }
-     void Update(float dt, Renderer *renderer);
-     // Texture = texture;
-     float speed = 100;
-     V2 velocity = {0, 0};
-};
 struct Paddle : public Entity{
      void Init(V2 position, Texture t){
           boundingBox = {position.x, position.y, 64, 16};
@@ -62,4 +50,17 @@ struct Paddle : public Entity{
      // Texture texture;
 };
 
+struct Ball : public Entity{
+     void Init(V2 position, Texture t){
+          boundingBox = {position.x, position.y, 16, 12};
+          clippingBox = {9 , 9, 8 , 6};
+          texture = t;
+          velocity.y = speed;
+     }
+     void Update(float dt, Renderer *renderer, Paddle *paddle);
+     void ResetPosition(Paddle *paddle);
+     // Texture = texture;
+     float speed = 100;
+     V2 velocity = {0, 0};
+};
 #endif

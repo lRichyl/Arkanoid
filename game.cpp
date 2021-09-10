@@ -1,8 +1,8 @@
 #include "renderer.h"
 #include "game.h"
 #include "GLFW/glfw3.h"
-#include "math.h"
 #include "entities.h"
+#include "math.h"
 #include "collision.h"
 
 Game::Game(Renderer *r, Window *w){
@@ -15,12 +15,13 @@ Game::Game(Renderer *r, Window *w){
      // paddle.boundingBox = {384,16,64,16};
      // paddle.clippingBox = {0 , 0, 32 , 8};
      paddle.Init(V2{384, 16}, arkanoidTexture);
-     ball.Init(V2{393, 26}, arkanoidTexture);
+     ball.Init(V2{0, 0}, arkanoidTexture);
+     ball.ResetPosition(&paddle);
 }
 
 void Game::UpdateGame(float dt){
      paddle.Update(dt, renderer);
-     ball.Update(dt, renderer);
+     ball.Update(dt, renderer, &paddle);
 
      //Collisions
      DoBallCollisionWithBlocks(dt);
@@ -81,9 +82,9 @@ void Game::DoBallCollisionWithBlocks(float dt){
                     Rect boundingBox = {levelOffset.x + x * blockSize.x, window->height - levelOffset.y - y * blockSize.y, blockSize.x, blockSize.y};
                     if(DoRectsCollide(ball.boundingBox, boundingBox, &penetration)){
                          blockStateMap[index] = 0;
-                         printf("Collision %f , %f \n", penetration.x, penetration.y);
                     }
                     if(penetration.y > 0) {
+                         ball.boundingBox.y -= penetration.y;
                          ball.velocity.y = -(ball.speed);
 
                     }
