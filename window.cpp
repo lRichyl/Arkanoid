@@ -14,16 +14,19 @@ Window* create_window(int width, int height, char *title){
      glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
      glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
      glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-     window->w = glfwCreateWindow(width, height, title, NULL, NULL);
-     window->width = width;
-     window->height = height;
+     window->GLFWInstance = glfwCreateWindow(width, height, title, NULL, NULL);
 
-     if(!window->w){
+     //This variables represent the internal resolution. Every calculation is based on these so that
+     //if you resize the window the everything scales correctly.
+     window->internalWidth = width;
+     window->internalHeight = height;
+
+     if(!window->GLFWInstance){
           glfwTerminate();
           printf("Window could not be created.");
           exit(0);
      }
-     glfwMakeContextCurrent(window->w);
+     glfwMakeContextCurrent(window->GLFWInstance);
      // glfwSwapInterval(1);
      if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
      {
@@ -35,7 +38,7 @@ Window* create_window(int width, int height, char *title){
      return window;
 }
 void swap_buffers(Window *window){
-     glfwSwapBuffers(window->w);
+     glfwSwapBuffers(window->GLFWInstance);
 }
 
 void poll_events(){

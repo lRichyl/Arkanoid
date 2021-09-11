@@ -96,8 +96,8 @@ void compile_default_shader_program(Renderer *renderer){
 }
 
 void initialize_renderer(Renderer *renderer, Window *window){
-     renderer->projection = glm::ortho(0.0f, (float)window->width, 0.0f, (float)window->height, -1.0f, 1.0f);
-     renderer->view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+     renderer->projection = glm::ortho(0.0f, (float)window->internalWidth, 0.0f, (float)window->internalHeight, -1.0f, 1.0f);
+     renderer->view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)); //Modify this in real time to move the camera.
      compile_default_shader_program(renderer);
      initialize_renderer_index_buffer(renderer);
 
@@ -160,7 +160,7 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
      }
 
      //We do this so that if we try to draw outside the window we don't add data to the vertex bufer.
-     if((position->x + position->w >= 0) && (position->x <= win->width) && (position->y >= 0) && (position->y - position->h <= win->height)){
+     if((position->x + position->w >= 0) && (position->x <= win->internalWidth) && (position->y >= 0) && (position->y - position->h <= win->internalHeight)){
           Batch *current_batch = &renderer->main_batch;
           float texture_slot_id = 0;
           if(check_if_texture_is_not_registered(*texture, current_batch)){

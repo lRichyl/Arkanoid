@@ -20,8 +20,8 @@ void Paddle::Update(float dt, Renderer *renderer){
      if(boundingBox.x + pendingMovement < 0){
           boundingBox.x = 0;
      }
-     else if(boundingBox.x + boundingBox.w + pendingMovement > renderer->window->width){
-          boundingBox.x = renderer->window->width - boundingBox.w;
+     else if(boundingBox.x + boundingBox.w + pendingMovement > renderer->window->internalWidth){
+          boundingBox.x = renderer->window->internalWidth - boundingBox.w;
      }
      else{
           boundingBox.x += pendingMovement;

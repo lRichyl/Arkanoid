@@ -20,7 +20,7 @@ int main(){
      window = create_window(800, 600, "Game Engine");
 
      printf("%s \n",glGetString(GL_VERSION));
-     glViewport(0,0,window->width,window->height);
+     glViewport(0,0,window->internalWidth,window->internalHeight);
 
      Renderer *renderer = create_renderer(window);
      if(!renderer){
@@ -37,9 +37,9 @@ int main(){
      LARGE_INTEGER start_time = get_time_counter();
 
      Game game = Game(renderer, window);
-     bool showFPS = true;
-     glfwSetWindowSizeCallback(window->w,WindowResizeCallback);
-     while(!glfwWindowShouldClose(window->w)){
+     bool showFPS = false;
+     glfwSetWindowSizeCallback(window->GLFWInstance,WindowResizeCallback);
+     while(!glfwWindowShouldClose(window->GLFWInstance)){
           glClear(GL_COLOR_BUFFER_BIT);
           // if(dt > 0.017){
           //      printf("%f", dt);

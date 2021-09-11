@@ -49,12 +49,15 @@ void Game::GameLoop(float dt){
 }
 
 void Game::DrawCurrentLevel(){
+     // levelOffset.x = window->width * .055 / 2;
+     // levelOffset.y = window->height * .053 / 2;
      for(int y = 0; y < levelHeight; y++){
           for(int x = 0; x < levelWidth; x++){
                int index = (levelWidth * y) + x;
                int clipRegion = currentLevel[index];
                if(blockStateMap[index]){
-                    Rect boundingBox = {levelOffset.x + x * blockSize.x, window->height - levelOffset.y - y * blockSize.y, blockSize.x, blockSize.y};
+                    //These should be save on their own array and initialize before every level.
+                    Rect boundingBox = {levelOffset.x + x * blockSize.x, window->internalHeight - levelOffset.y - y * blockSize.y, blockSize.x, blockSize.y};
                     render_quad(renderer, &boundingBox, &arkanoidTexture, &blockClipRegions[clipRegion]);
                }
           }
@@ -74,12 +77,13 @@ void Game::CalculateNumberOfBlocksToWin(){
 }
 
 void Game::DoBallCollisionWithBlocks(float dt){
-     V2 penetration; //We don't use this currently
+     V2 penetration;
      for(int y = 0; y < levelHeight; y++){
           for(int x = 0; x < levelWidth; x++){
                int index = (levelWidth * y) + x;
                if(blockStateMap[index]){
-                    Rect boundingBox = {levelOffset.x + x * blockSize.x, window->height - levelOffset.y - y * blockSize.y, blockSize.x, blockSize.y};
+                    //Look ABOVE line 59.
+                    Rect boundingBox = {levelOffset.x + x * blockSize.x, window->internalHeight - levelOffset.y - y * blockSize.y, blockSize.x, blockSize.y};
                     if(DoRectsCollide(ball.boundingBox, boundingBox, &penetration)){
                          blockStateMap[index] = 0;
                     }
