@@ -4,6 +4,7 @@
 #include "entities.h"
 #include "math.h"
 #include "collision.h"
+#include "input.h"
 
 Game::Game(Renderer *r, Window *w){
      renderer = r;
@@ -22,6 +23,9 @@ Game::Game(Renderer *r, Window *w){
 void Game::UpdateGame(float dt){
      paddle.Update(dt, renderer);
      ball.Update(dt, renderer, &paddle);
+     // if(isKeyPressed(renderer->window, GLFW_KEY_SPACE)){
+     //      change_drawing_resolution(renderer, 200, 150);
+     // }
 
      //Collisions
      DoBallCollisionWithBlocks(dt);

@@ -4,6 +4,7 @@
 #include "gtc/matrix_transform.hpp"
 #include "gtc/type_ptr.hpp"
 #include "window.h"
+#include "math.h"
 
 struct RendererInfo{
      static const int QUADS_PER_BATCH = 1000;
@@ -35,8 +36,20 @@ struct Batch{
 };
 struct Renderer{
      unsigned int ibo;
+     unsigned int fbo;
+     unsigned int framebuffer_ibo;
+     unsigned int framebuffer_vao;
+     unsigned int framebuffer_vbo;
+     unsigned int framebuffer_rbo;
+     unsigned int framebuffer_texture;
+     V2 drawing_resolution = {800, 600};
+     ShaderProgram framebuffer_shader_program;
      Window *window;
-     // unsigned int index_buffer[6] = {0,1,2,2,3,0};
+     unsigned int framebuffer_index_buffer[6] = {0,1,2,2,3,0};
+     float framebuffer_vertex_buffer[16] = {-1.0f, 1.0f, 0.0f, 1.0f,
+                                         -1.0f, -1.0f, 0.0f, 0.0f,
+                                          1.0f, -1.0f, 1.0f, 0.0f,
+                                          1.0f, 1.0f, 1.0f, 1.0f};
      glm::mat4 projection;
      //Use this matrix later to move the camera.
      glm::mat4 view;
@@ -64,6 +77,7 @@ struct Rect{
 
 Renderer* create_renderer(Window *window);
 void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alphaValue = 255);
+void change_drawing_resolution(Renderer *renderer, int width, int height);
 Texture make_texture(const char *path);
 void renderer_draw(Renderer *renderer);
 void destroy_renderer(Renderer *renderer);

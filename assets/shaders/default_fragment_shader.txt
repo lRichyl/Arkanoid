@@ -1,6 +1,5 @@
 #version 330 core
-
-out vec4 fragColor;
+layout(location = 0)out vec4 fragColor;
 in vec2 outTexCoord;
 in float outTexID;
 in float outAlphaValue;
@@ -18,4 +17,5 @@ void main()
 			break;
 		}
 	}
+//fragColor = texture2D(u_textures[0], outTexCoord);
 }

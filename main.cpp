@@ -37,10 +37,10 @@ int main(){
      LARGE_INTEGER start_time = get_time_counter();
 
      Game game = Game(renderer, window);
-     bool showFPS = false;
+     bool showFPS = true;
      glfwSetWindowSizeCallback(window->GLFWInstance,WindowResizeCallback);
      while(!glfwWindowShouldClose(window->GLFWInstance)){
-          glClear(GL_COLOR_BUFFER_BIT);
+
           // if(dt > 0.017){
           //      printf("%f", dt);
           //      continue;

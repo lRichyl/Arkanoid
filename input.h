@@ -2,14 +2,8 @@
 #define EVENTS_H
 
 #include "GLFW/glfw3.h"
+#include "window.h"
 
-bool isKeyPressed(Window *window, int key){
-     int state = glfwGetKey(window->GLFWInstance, key);
-     if (state == GLFW_PRESS)
-     {
-         return true;
-     }
-     return false;
-}
+bool isKeyPressed(Window *window, int key);
 
 #endif

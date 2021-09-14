@@ -7,13 +7,116 @@
 
 bool check_if_texture_is_not_registered(Texture texture, Batch *batch);
 void bind_texture(int slot, unsigned int id);
+static void rebind_registered_texture_ids(Batch *batch);
 void create_shader_program(ShaderProgram *program, unsigned int vertex_shader, unsigned int fragment_shader);
 void make_vertex_shader(const char* path, unsigned int *vertex_shader);
 void make_fragment_shader(const char* path, unsigned int *fragment_shader);
 
 int RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH = 0;
 
-void initialize_renderer_index_buffer(Renderer *renderer){
+void create_framebuffer_buffers(Renderer *renderer){
+     // glUseProgram(renderer->framebuffer_shader_program.id);
+
+     glGenVertexArrays(1, &renderer->framebuffer_vao);
+     glBindVertexArray(renderer->framebuffer_vao);
+
+     glGenBuffers(1, &renderer->framebuffer_ibo);
+     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->framebuffer_ibo);
+     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(renderer->framebuffer_index_buffer), (void*)renderer->framebuffer_index_buffer, GL_STATIC_DRAW);
+
+     glGenBuffers(1, &renderer->framebuffer_vbo);
+     glBindBuffer(GL_ARRAY_BUFFER, renderer->framebuffer_vbo);
+     glBufferData(GL_ARRAY_BUFFER, sizeof(renderer->framebuffer_vertex_buffer), (void*)renderer->framebuffer_vertex_buffer, GL_STATIC_DRAW);
+
+     glEnableVertexAttribArray(0);
+     glVertexAttribPointer(0, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)0);
+     glEnableVertexAttribArray(1);
+     glVertexAttribPointer(1, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)( 2 * sizeof(float)));
+
+
+     glBindVertexArray(0);
+}
+
+void change_drawing_resolution(Renderer *renderer, int width, int height){
+     renderer->drawing_resolution.x = width;
+     renderer->drawing_resolution.y = height;
+     glDeleteTextures(1, &renderer->framebuffer_texture);
+     glGenTextures(1, &renderer->framebuffer_texture);
+     glActiveTexture(GL_TEXTURE0);
+     glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
+     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+     glBindTexture(GL_TEXTURE_2D, 0);
+
+     glBindFramebuffer(GL_FRAMEBUFFER, renderer->fbo);
+     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer->framebuffer_texture, 0);
+     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+}
+
+static void initialize_framebuffer(Renderer *renderer){
+
+     glGenFramebuffers(1, &renderer->fbo);
+     glBindFramebuffer(GL_FRAMEBUFFER, renderer->fbo);
+
+     glGenTextures(1, &renderer->framebuffer_texture);
+     glActiveTexture(GL_TEXTURE0);
+     glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
+     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (int)renderer->drawing_resolution.x, (int)renderer->drawing_resolution.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+     glBindTexture(GL_TEXTURE_2D, 0);
+
+
+     // glGenTextures(1, &renderer->framebuffer_rbo);
+     // glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_rbo);
+     // // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
+     // glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, 400, 300, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+     // glBindTexture(GL_TEXTURE_2D, 0);
+
+
+     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer->framebuffer_texture, 0);
+     // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, renderer->framebuffer_rbo,0);
+     GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+     glDrawBuffers(1, DrawBuffers);
+
+     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	    printf("ERROR: Framebuffer is not complete!");
+     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+     glUseProgram(renderer->framebuffer_shader_program.id);
+     // int framebuffer_texture = glGetUniformLocation(renderer->framebuffer_shader_program.id, "screenTexture");
+     //
+     // glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
+     // glUniform1i(framebuffer_texture, 0);
+     glUseProgram(0);
+
+}
+
+static void draw_framebuffer(Renderer *renderer){
+     glUseProgram(renderer->framebuffer_shader_program.id);
+     glBindVertexArray(renderer->framebuffer_vao);
+     // glBindBuffer(GL_ARRAY_BUFFER, renderer->framebuffer_vbo);
+     //
+     // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->framebuffer_ibo);
+     // glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
+
+     int framebuffer_texture = glGetUniformLocation(renderer->framebuffer_shader_program.id, "screenTexture");
+     glActiveTexture(GL_TEXTURE0);
+     glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
+     glUniform1i(framebuffer_texture, 0);
+
+     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+     glBindTexture(GL_TEXTURE_2D, 0);
+     glBindVertexArray(0);
+     glUseProgram(0);
+}
+static void initialize_renderer_index_buffer(Renderer *renderer){
      int indices_index = 0;
      for(int i = 0; i< RendererInfo::TOTAL_INDICES ;) {
           for(int j = 0; j< 6 ;j++, i++) {
@@ -39,7 +142,7 @@ void initialize_renderer_index_buffer(Renderer *renderer){
           glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(renderer->index_buffer), (void*)renderer->index_buffer, GL_DYNAMIC_DRAW);
      }
 }
-void initialize_batch_vertex_buffers_and_arrays(Batch *batch, Renderer *renderer){
+static void initialize_batch_vertex_buffers_and_arrays(Batch *batch, Renderer *renderer){
      batch->shader_program = renderer->default_shader_program;
      glGenVertexArrays(1, &batch->vao);
      glBindVertexArray(batch->vao);
@@ -76,6 +179,7 @@ void initialize_batch_texture_sampler(Batch *batch){
      }
      glUniform1iv(texture_sampler_id, max_texture_units, a);
      delete a;
+     glUseProgram(0);
 }
 
 void load_mvp_to_shader(Renderer *renderer){
@@ -85,22 +189,30 @@ void load_mvp_to_shader(Renderer *renderer){
 
      int view_uniform_id = glGetUniformLocation(renderer->main_batch.shader_program.id, ("u_view"));
      glUniformMatrix4fv(view_uniform_id, 1, GL_FALSE, glm::value_ptr(renderer->view));
+     glUseProgram(0);
 }
 
-void compile_default_shader_program(Renderer *renderer){
+void compile_shader_program(ShaderProgram *shader_program, char *vs_path, char *fs_path){
      unsigned int vs;
      unsigned int fs;
-     make_vertex_shader("assets/shaders/default_vertex_shader.txt", &vs);
-     make_fragment_shader("assets/shaders/default_fragment_shader.txt", &fs);
-     create_shader_program(&renderer->default_shader_program, vs, fs);
+     make_vertex_shader(vs_path, &vs);
+     make_fragment_shader(fs_path, &fs);
+     create_shader_program(shader_program, vs, fs);
+     printf("SHADER PROGRAM\n");
+     printf("%s\n", vs_path);
+     printf("%s\n", fs_path);
+     printf("Succesfully compiled\n\n");
 }
 
 void initialize_renderer(Renderer *renderer, Window *window){
      renderer->projection = glm::ortho(0.0f, (float)window->internalWidth, 0.0f, (float)window->internalHeight, -1.0f, 1.0f);
      renderer->view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)); //Modify this in real time to move the camera.
-     compile_default_shader_program(renderer);
-     initialize_renderer_index_buffer(renderer);
+     compile_shader_program(&renderer->default_shader_program, "assets/shaders/default_vertex_shader.txt", "assets/shaders/default_fragment_shader.txt");
+     compile_shader_program(&renderer->framebuffer_shader_program, "assets/shaders/framebuffer_vertex_shader.txt", "assets/shaders/framebuffer_fragment_shader.txt");
+     create_framebuffer_buffers(renderer);
+     initialize_framebuffer(renderer);
 
+     initialize_renderer_index_buffer(renderer);
      //This should be in a loop when we add multiple batches to initialize them.
      initialize_batch_vertex_buffers_and_arrays(&renderer->main_batch, renderer);
      initialize_batch_texture_sampler(&renderer->main_batch);
@@ -118,6 +230,8 @@ Renderer* create_renderer(Window *window){
 }
 
 void destroy_renderer(Renderer *renderer){
+     glDeleteFramebuffers(1, &renderer->fbo);
+     glDeleteTextures(1, &renderer->framebuffer_texture);
      delete renderer;
 }
 
@@ -159,7 +273,7 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
           V2::SwitchXComponents(&bottom_left_clip, &bottom_right_clip);
      }
 
-     //We do this so that if we try to draw outside the window we don't add data to the vertex bufer.
+     //We do this so that if we try to draw outside the window we don't add data to the vertex buffer.
      if((position->x + position->w >= 0) && (position->x <= win->internalWidth) && (position->y >= 0) && (position->y - position->h <= win->internalHeight)){
           Batch *current_batch = &renderer->main_batch;
           float texture_slot_id = 0;
@@ -176,7 +290,6 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
                     }
                }
           }
-          // printf("%d %d", current_batch->texture_index, RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH);
           assert(current_batch->texture_index <= RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH);
 
 
@@ -208,27 +321,32 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
           current_batch->vertex_buffer[current_batch->vertices_index + 22] = texture_slot_id;
           current_batch->vertex_buffer[current_batch->vertices_index + 23] = normalizedAlphaValue;
 
-          // int i = 0;
-          // int j = 0;
-          // for(i = 0; i < 4; i++){
-               //      printf("[%d]", i);
-               //      for(j = 0; j < 5; j++){
-                    //           printf("%f, ", current_batch->vertex_buffer[current_batch->vertices_index + (j + (i * 5))]);
-                    //      }
-                    //      printf("\n");
-                    // }
-                    current_batch->vertices_index += RendererInfo::FLOATS_PER_QUAD;
-                    current_batch->number_of_quads_to_copy++;
-                    current_batch->total_indices_to_draw += RendererInfo::INDICES_PER_QUAD;
 
-                    assert(current_batch->number_of_quads_to_copy <= RendererInfo::QUADS_PER_BATCH);
+          current_batch->vertices_index += RendererInfo::FLOATS_PER_QUAD;
+          current_batch->number_of_quads_to_copy++;
+          current_batch->total_indices_to_draw += RendererInfo::INDICES_PER_QUAD;
+
+          assert(current_batch->number_of_quads_to_copy <= RendererInfo::QUADS_PER_BATCH);
 
      }
 }
 
 void renderer_draw(Renderer *renderer){
      Batch *current_batch = &renderer->main_batch;
+
+     //We need to rebind the registered textures in each batch before drawing to the framebuffer.
+     //If we don't the batch´s textures get overwritten by the framebuffer texture. And we don't want
+     //to reserve a texture unit just for the framebuffer.
+     //What happened was that we used the texture unit 0 for the frambuffer texture, so the first texture
+     //of the batch would get overwritten.
+     //This will have to be done for every batch when we implement multiple batches.
+     rebind_registered_texture_ids(current_batch);
+
+     glViewport(0,0,(int)renderer->drawing_resolution.x, (int)renderer->drawing_resolution.y);
      glUseProgram(current_batch->shader_program.id);
+     glBindFramebuffer(GL_FRAMEBUFFER, renderer->fbo);
+     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+     glEnable(GL_DEPTH_TEST);
      glBindVertexArray(current_batch->vao);
      glBindBuffer(GL_ARRAY_BUFFER, current_batch->vbo);
 
@@ -239,10 +357,34 @@ void renderer_draw(Renderer *renderer){
      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->ibo);
      glDrawElements(GL_TRIANGLES, current_batch->total_indices_to_draw, GL_UNSIGNED_INT, 0);
      glBindVertexArray(0);
+     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+     // glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+     glDisable(GL_DEPTH_TEST);
+
+
+
+     // glUseProgram(renderer->framebuffer_shader_program.id);
+     // int framebuffer_texture = glGetUniformLocation(renderer->framebuffer_shader_program.id, "screenTexture");
+     // glActiveTexture(GL_TEXTURE0 + current_batch->texture_index);
+     // glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
+     // glUniform1i(framebuffer_texture, 0);
 
      current_batch->vertices_index = 0;
      current_batch->number_of_quads_to_copy = 0;
      current_batch->total_indices_to_draw = 0;
+     // current_batch->texture_index = 0;
+     int width, height;
+     glfwGetWindowSize(renderer->window->GLFWInstance, &width, &height);
+
+     glViewport(0, 0, width, height);
+     draw_framebuffer(renderer);
+
+
+     // glDeleteTextures(1, &renderer->framebuffer_texture);
+     // glDeleteFramebuffers(1, &renderer->fbo);
 }
 
 void create_shader_program(ShaderProgram *program, unsigned int vertex_shader, unsigned int fragment_shader){
@@ -260,6 +402,8 @@ void create_shader_program(ShaderProgram *program, unsigned int vertex_shader, u
 
      glDetachShader(id, vertex_shader);
      glDetachShader(id, fragment_shader);
+     glDeleteShader(vertex_shader);
+     glDeleteShader(fragment_shader);
 }
 
 void make_vertex_shader(const char* path, unsigned int *vertex_shader){
@@ -278,7 +422,7 @@ void make_vertex_shader(const char* path, unsigned int *vertex_shader){
          printf("Vertex shader compilation failed: \n %s", infoLog);
      }
      else{
-          printf("Vertex shader succesfully compiled \n");
+          // printf("Vertex shader succesfully compiled \n");
      }
      free(source);
 }
@@ -299,7 +443,7 @@ void make_fragment_shader(const char* path, unsigned int *fragment_shader){
          printf("Fragmetn shader compilation failed: \n %s", infoLog);
      }
      else{
-          printf("Fragment shader succesfully compiled \n");
+          // printf("Fragment shader succesfully compiled \n");
      }
      free(source);
 }
@@ -349,5 +493,11 @@ bool check_if_texture_is_not_registered(Texture texture, Batch *batch){
      }else{
           // printf("%d ", count );
           return false;
+     }
+}
+
+static void rebind_registered_texture_ids(Batch *batch){
+     for(int i = 0; i < RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH; i++){
+          bind_texture( i, batch->registered_textures_ids[i]);
      }
 }
