@@ -14,6 +14,11 @@ enum Blocks{
      BLOCKS_COUNT
 };
 
+enum BallState{
+     ON_PADDLE,
+     MOVING
+};
+
 struct Entity{
      Rect boundingBox = {};
      Rect clippingBox = {};
@@ -59,8 +64,12 @@ struct Ball : public Entity{
      }
      void Update(float dt, Renderer *renderer, Paddle *paddle);
      void ResetPosition(Paddle *paddle);
+     void Bounce(V2 penetration);
      // Texture = texture;
-     float speed = 100;
+     BallState state = ON_PADDLE;
+     float speed = 200;
      V2 velocity = {0, 0};
 };
+
+
 #endif

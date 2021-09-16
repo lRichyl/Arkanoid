@@ -10,19 +10,19 @@
 #include "stb_image.h"
 
 
-bool doGameLoop = true;
 void WindowResizeCallback(GLFWwindow* window, int width, int height){
      glViewport(0, 0, width, height);
 }
 
 int main(){
      Window *window;
+     //The size here is the size of the window and the initial drawing resolution.
+     //The internal resolution can be set manually and it's the one used for the game calculations.
      window = create_window(800, 600, "Game Engine");
 
      printf("%s \n",glGetString(GL_VERSION));
-     glViewport(0,0,window->internalWidth,window->internalHeight);
-
      Renderer *renderer = create_renderer(window);
+
      if(!renderer){
           printf("Error creating the renderer\n");
           exit(0);
@@ -31,6 +31,10 @@ int main(){
      float fixed_fps = 60.0f;
      float dt_in_ms = 1.0f / fixed_fps * 1000.0f;
      float dt = 0;
+     const int NUM_SAMPLES = 100;
+     int sample_count = 0;
+     float samples[NUM_SAMPLES] = {};
+
      //printf("%f", dt);
 
      long long perf_count_frequency = get_performance_counter_frequency();
@@ -39,6 +43,7 @@ int main(){
      Game game = Game(renderer, window);
      bool showFPS = true;
      glfwSetWindowSizeCallback(window->GLFWInstance,WindowResizeCallback);
+
      while(!glfwWindowShouldClose(window->GLFWInstance)){
 
           // if(dt > 0.017){
@@ -75,16 +80,21 @@ int main(){
           }
           dt = ms_per_frame / 1000.0f;
           int fps = round(1.0f/((waited_time + ms_per_frame)/1000.0f));
-          if(showFPS){
-               printf("Real FPS: %f ", 1.f/(ms_per_frame/1000.f));
+          if(showFPS && sample_count == NUM_SAMPLES - 1){
+               float sum = 0;
+               for(int i = 0; i < sample_count; i++){
+                    sum += samples[i];
+               }
+               float average_ms = sum / (NUM_SAMPLES);
+               int average_fps = 1.f / (average_ms / 1000.f);
+               sample_count = 0;
+
+               printf("Real FPS: %f ", 1.f / (ms_per_frame / 1000.f));
                printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
           }
+          samples[sample_count] = ms_per_frame;
+          sample_count++;
           Sleep(1);
-
-
-
-
-          // doGameLoop = true;
      }
      glfwTerminate();
      destroy_window(window);

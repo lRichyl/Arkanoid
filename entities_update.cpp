@@ -30,10 +30,33 @@ void Paddle::Update(float dt, Renderer *renderer){
 }
 
 void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
-     boundingBox.x += velocity.x * dt;
-     boundingBox.y += velocity.y * dt;
+     switch(state){
+          case ON_PADDLE:{
+               velocity.x = 0;
+               velocity.y = speed;
+               ResetPosition(paddle);
+               break;
+          }
+          case MOVING:{
+               boundingBox.x += velocity.x * dt;
+               boundingBox.y += velocity.y * dt;
 
-     if(boundingBox.y < 0) ResetPosition(paddle);
+               if(boundingBox.y < 0 || boundingBox.y - boundingBox.h > renderer->window->internalHeight){
+                    ResetPosition(paddle);
+                    state = BallState::ON_PADDLE;
+               }
+
+               if(boundingBox.x < 0 || boundingBox.x + boundingBox.w > renderer->window->internalWidth){
+                    velocity.x *= -1;
+               }
+
+               if(boundingBox.y - boundingBox.h > renderer->window->internalHeight){
+                    velocity.y *= -1;
+               }
+               break;
+          }
+     }
+
 }
 
 void Ball::ResetPosition(Paddle *paddle){
@@ -41,4 +64,16 @@ void Ball::ResetPosition(Paddle *paddle){
      float y = paddle->boundingBox.y + boundingBox.h;
      boundingBox.x = x;
      boundingBox.y = y;
+}
+
+void Ball::Bounce(V2 penetration){
+     if(penetration.y > 0 || penetration.y < 0) {
+          boundingBox.y -= penetration.y;
+          velocity.y *= -1;
+     }
+
+     if(penetration.x > 0 || penetration.x < 0){
+          boundingBox.x -= penetration.x;
+          velocity.x *= -1;
+     }
 }

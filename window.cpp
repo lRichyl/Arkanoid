@@ -18,8 +18,9 @@ Window* create_window(int width, int height, char *title){
 
      //This variables represent the internal resolution. Every calculation is based on these so that
      //if you resize the window the everything scales correctly.
-     window->internalWidth = width;
-     window->internalHeight = height;
+     //This should be set only once at the start of the program.
+     window->internalWidth = 800;
+     window->internalHeight = 600;
 
      if(!window->GLFWInstance){
           glfwTerminate();

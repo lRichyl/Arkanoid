@@ -15,7 +15,10 @@ struct Game{
      void DrawCurrentLevel();
      void DrawBall();
      void CalculateNumberOfBlocksToWin();
-     void DoBallCollisionWithBlocks(float dt);
+     void GenerateBlocksBoundingBoxes();
+     void BallCollisionWithBlocks(float dt);
+     void BallCollisionWithPaddle(float dt);
+     void MaybeLaunchBall();
 
      Renderer *renderer;
      Window *window;
@@ -32,11 +35,14 @@ struct Game{
      Ball ball;
      static const int levelWidth = 12;
      static const int levelHeight = 7;
+     static const int maxNumberOfBlocksBoundingBoxes = 100;
      static const int numberOfLevels = 5;
      static constexpr V2 blockSize = {63, 32};
+
      int *levelList[numberOfLevels];
      int *currentLevel;
      int numberOfBlocksToWin = 0;
+     Rect blocksBoundingBoxes[maxNumberOfBlocksBoundingBoxes];
      V2 levelOffset = {22, 30};
 
      int level1[levelWidth * levelHeight] ={0,0,0,0,0,0,0,0,0,0,0,0,

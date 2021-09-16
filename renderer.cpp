@@ -44,7 +44,7 @@ void change_drawing_resolution(Renderer *renderer, int width, int height){
      glGenTextures(1, &renderer->framebuffer_texture);
      glActiveTexture(GL_TEXTURE0);
      glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
-     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -65,7 +65,7 @@ static void initialize_framebuffer(Renderer *renderer){
      glGenTextures(1, &renderer->framebuffer_texture);
      glActiveTexture(GL_TEXTURE0);
      glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
-     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (int)renderer->drawing_resolution.x, (int)renderer->drawing_resolution.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (int)renderer->drawing_resolution.x, (int)renderer->drawing_resolution.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -85,8 +85,10 @@ static void initialize_framebuffer(Renderer *renderer){
      GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
      glDrawBuffers(1, DrawBuffers);
 
-     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	    printf("ERROR: Framebuffer is not complete!");
+     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+          printf("ERROR: Framebuffer is not complete!");
+          exit(0);
+     }
      glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
      glUseProgram(renderer->framebuffer_shader_program.id);
@@ -207,6 +209,9 @@ void compile_shader_program(ShaderProgram *shader_program, char *vs_path, char *
 void initialize_renderer(Renderer *renderer, Window *window){
      renderer->projection = glm::ortho(0.0f, (float)window->internalWidth, 0.0f, (float)window->internalHeight, -1.0f, 1.0f);
      renderer->view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)); //Modify this in real time to move the camera.
+     renderer->drawing_resolution.x = window->internalWidth;
+     renderer->drawing_resolution.y = window->internalHeight;
+     renderer->current_batch = &renderer->main_batch;
      compile_shader_program(&renderer->default_shader_program, "assets/shaders/default_vertex_shader.txt", "assets/shaders/default_fragment_shader.txt");
      compile_shader_program(&renderer->framebuffer_shader_program, "assets/shaders/framebuffer_vertex_shader.txt", "assets/shaders/framebuffer_fragment_shader.txt");
      create_framebuffer_buffers(renderer);
@@ -217,6 +222,9 @@ void initialize_renderer(Renderer *renderer, Window *window){
      initialize_batch_vertex_buffers_and_arrays(&renderer->main_batch, renderer);
      initialize_batch_texture_sampler(&renderer->main_batch);
      //This needs to happen after the shader program is compiled.
+
+     initialize_batch_vertex_buffers_and_arrays(&renderer->ui_batch, renderer);
+     initialize_batch_texture_sampler(&renderer->ui_batch);
      load_mvp_to_shader(renderer);
 
 }
@@ -235,13 +243,13 @@ void destroy_renderer(Renderer *renderer){
      delete renderer;
 }
 
-void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirror, float alphaValue){
+static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *position, Texture *texture, Rect *clip_region, bool mirror, float alpha_value){
      Window *win = renderer->window;
      V2 top_left_clip;
      V2 bottom_left_clip;
      V2 top_right_clip;
      V2 bottom_right_clip;
-     float normalizedAlphaValue = alphaValue / 255.f;
+     float normalizedAlphaValue = alpha_value / 255.f;
 
      //The clip_region is used to select a part of a texture that we want to render.
      if(clip_region){
@@ -275,64 +283,77 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
 
      //We do this so that if we try to draw outside the window we don't add data to the vertex buffer.
      if((position->x + position->w >= 0) && (position->x <= win->internalWidth) && (position->y >= 0) && (position->y - position->h <= win->internalHeight)){
-          Batch *current_batch = &renderer->main_batch;
+          // Batch *current_batch = &renderer->main_batch;
           float texture_slot_id = 0;
-          if(check_if_texture_is_not_registered(*texture, current_batch)){
-               current_batch->registered_textures_ids[current_batch->texture_index] = texture->id;
-               bind_texture(current_batch->texture_index, texture->id);
-               texture_slot_id = (float)current_batch->texture_index;
-               current_batch->texture_index++;
+          if(check_if_texture_is_not_registered(*texture, batch)){
+               batch->registered_textures_ids[batch->texture_index] = texture->id;
+               bind_texture(batch->texture_index, texture->id);
+               texture_slot_id = (float)batch->texture_index;
+               batch->texture_index++;
           }else{
                for(int i = 0; i < RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH; i++){
-                    if(texture->id == current_batch->registered_textures_ids[i]){
+                    if(texture->id == batch->registered_textures_ids[i]){
                          texture_slot_id = i;
                          break;
                     }
                }
           }
-          assert(current_batch->texture_index <= RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH);
+          assert(batch->texture_index <= RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH);
 
 
-          current_batch->vertex_buffer[current_batch->vertices_index] = position->x;
-          current_batch->vertex_buffer[current_batch->vertices_index + 1] = position->y;
-          current_batch->vertex_buffer[current_batch->vertices_index + 2] = top_left_clip.x;
-          current_batch->vertex_buffer[current_batch->vertices_index + 3] = top_left_clip.y;
-          current_batch->vertex_buffer[current_batch->vertices_index + 4] = texture_slot_id;
-          current_batch->vertex_buffer[current_batch->vertices_index + 5] = normalizedAlphaValue;
+          batch->vertex_buffer[batch->vertices_index] = position->x;
+          batch->vertex_buffer[batch->vertices_index + 1] = position->y;
+          batch->vertex_buffer[batch->vertices_index + 2] = top_left_clip.x;
+          batch->vertex_buffer[batch->vertices_index + 3] = top_left_clip.y;
+          batch->vertex_buffer[batch->vertices_index + 4] = texture_slot_id;
+          batch->vertex_buffer[batch->vertices_index + 5] = normalizedAlphaValue;
 
-          current_batch->vertex_buffer[current_batch->vertices_index + 6] =  position->x;
-          current_batch->vertex_buffer[current_batch->vertices_index + 7] = position->y - position->h;
-          current_batch->vertex_buffer[current_batch->vertices_index + 8] = bottom_left_clip.x;
-          current_batch->vertex_buffer[current_batch->vertices_index + 9] = bottom_left_clip.y;
-          current_batch->vertex_buffer[current_batch->vertices_index + 10] = texture_slot_id;
-          current_batch->vertex_buffer[current_batch->vertices_index + 11] = normalizedAlphaValue;
+          batch->vertex_buffer[batch->vertices_index + 6] =  position->x;
+          batch->vertex_buffer[batch->vertices_index + 7] = position->y - position->h;
+          batch->vertex_buffer[batch->vertices_index + 8] = bottom_left_clip.x;
+          batch->vertex_buffer[batch->vertices_index + 9] = bottom_left_clip.y;
+          batch->vertex_buffer[batch->vertices_index + 10] = texture_slot_id;
+          batch->vertex_buffer[batch->vertices_index + 11] = normalizedAlphaValue;
 
-          current_batch->vertex_buffer[current_batch->vertices_index + 12] = position->x + position->w;
-          current_batch->vertex_buffer[current_batch->vertices_index + 13] = position->y - position->h;
-          current_batch->vertex_buffer[current_batch->vertices_index + 14] = bottom_right_clip.x;
-          current_batch->vertex_buffer[current_batch->vertices_index + 15] = bottom_right_clip.y;
-          current_batch->vertex_buffer[current_batch->vertices_index + 16] = texture_slot_id;
-          current_batch->vertex_buffer[current_batch->vertices_index + 17] = normalizedAlphaValue;
+          batch->vertex_buffer[batch->vertices_index + 12] = position->x + position->w;
+          batch->vertex_buffer[batch->vertices_index + 13] = position->y - position->h;
+          batch->vertex_buffer[batch->vertices_index + 14] = bottom_right_clip.x;
+          batch->vertex_buffer[batch->vertices_index + 15] = bottom_right_clip.y;
+          batch->vertex_buffer[batch->vertices_index + 16] = texture_slot_id;
+          batch->vertex_buffer[batch->vertices_index + 17] = normalizedAlphaValue;
 
-          current_batch->vertex_buffer[current_batch->vertices_index + 18] = position->x + position->w;
-          current_batch->vertex_buffer[current_batch->vertices_index + 19] = position->y;
-          current_batch->vertex_buffer[current_batch->vertices_index + 20] = top_right_clip.x;
-          current_batch->vertex_buffer[current_batch->vertices_index + 21] = top_right_clip.y;
-          current_batch->vertex_buffer[current_batch->vertices_index + 22] = texture_slot_id;
-          current_batch->vertex_buffer[current_batch->vertices_index + 23] = normalizedAlphaValue;
+          batch->vertex_buffer[batch->vertices_index + 18] = position->x + position->w;
+          batch->vertex_buffer[batch->vertices_index + 19] = position->y;
+          batch->vertex_buffer[batch->vertices_index + 20] = top_right_clip.x;
+          batch->vertex_buffer[batch->vertices_index + 21] = top_right_clip.y;
+          batch->vertex_buffer[batch->vertices_index + 22] = texture_slot_id;
+          batch->vertex_buffer[batch->vertices_index + 23] = normalizedAlphaValue;
 
 
-          current_batch->vertices_index += RendererInfo::FLOATS_PER_QUAD;
-          current_batch->number_of_quads_to_copy++;
-          current_batch->total_indices_to_draw += RendererInfo::INDICES_PER_QUAD;
+          batch->vertices_index += RendererInfo::FLOATS_PER_QUAD;
+          batch->number_of_quads_to_copy++;
+          batch->total_indices_to_draw += RendererInfo::INDICES_PER_QUAD;
 
-          assert(current_batch->number_of_quads_to_copy <= RendererInfo::QUADS_PER_BATCH);
+          assert(batch->number_of_quads_to_copy <= RendererInfo::QUADS_PER_BATCH);
 
      }
 }
 
+void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirror, float alpha_value){
+     //This is temporary and it should actually select a the next available batch when the current gets filled or the
+     //max amount of textures get bound.
+     Batch *batch = &renderer->main_batch;
+     render_quad_on_batch(renderer, batch, position, texture, clip_region, mirror, alpha_value);
+}
+
+//Things drawn with this function do no get drawn on the same framebuffer as the main render_quad function so it does not get
+//the postprocessing effects.
+void render_quad_to_ui(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirror, float alpha_value){
+     render_quad_on_batch(renderer, &renderer->ui_batch, position, texture, clip_region, mirror, alpha_value);
+}
+
 void renderer_draw(Renderer *renderer){
-     Batch *current_batch = &renderer->main_batch;
+     // Batch *current_batch = &renderer->main_batch;
 
      //We need to rebind the registered textures in each batch before drawing to the framebuffer.
      //If we don't the batch´s textures get overwritten by the framebuffer texture. And we don't want
@@ -340,22 +361,22 @@ void renderer_draw(Renderer *renderer){
      //What happened was that we used the texture unit 0 for the frambuffer texture, so the first texture
      //of the batch would get overwritten.
      //This will have to be done for every batch when we implement multiple batches.
-     rebind_registered_texture_ids(current_batch);
+     rebind_registered_texture_ids(renderer->current_batch);
 
      glViewport(0,0,(int)renderer->drawing_resolution.x, (int)renderer->drawing_resolution.y);
-     glUseProgram(current_batch->shader_program.id);
+     glUseProgram(renderer->current_batch->shader_program.id);
      glBindFramebuffer(GL_FRAMEBUFFER, renderer->fbo);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
      glEnable(GL_DEPTH_TEST);
-     glBindVertexArray(current_batch->vao);
-     glBindBuffer(GL_ARRAY_BUFFER, current_batch->vbo);
+     glBindVertexArray(renderer->current_batch->vao);
+     glBindBuffer(GL_ARRAY_BUFFER, renderer->current_batch->vbo);
 
-     int bytes_to_copy = current_batch->vertices_index * sizeof(float);
+     int bytes_to_copy = renderer->current_batch->vertices_index * sizeof(float);
      //We only copy the vertex data that we are going to draw instead of copying the entire preallocated buffer.
      //This way we can preallocate a vertex buffer of any size and not affect performance.
-     glBufferSubData(GL_ARRAY_BUFFER, 0, bytes_to_copy, (void*)current_batch->vertex_buffer);
+     glBufferSubData(GL_ARRAY_BUFFER, 0, bytes_to_copy, (void*)renderer->current_batch->vertex_buffer);
      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->ibo);
-     glDrawElements(GL_TRIANGLES, current_batch->total_indices_to_draw, GL_UNSIGNED_INT, 0);
+     glDrawElements(GL_TRIANGLES, renderer->current_batch->total_indices_to_draw, GL_UNSIGNED_INT, 0);
      glBindVertexArray(0);
      glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -368,14 +389,14 @@ void renderer_draw(Renderer *renderer){
 
      // glUseProgram(renderer->framebuffer_shader_program.id);
      // int framebuffer_texture = glGetUniformLocation(renderer->framebuffer_shader_program.id, "screenTexture");
-     // glActiveTexture(GL_TEXTURE0 + current_batch->texture_index);
+     // glActiveTexture(GL_TEXTURE0 + renderer->current_batch->texture_index);
      // glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
      // glUniform1i(framebuffer_texture, 0);
 
-     current_batch->vertices_index = 0;
-     current_batch->number_of_quads_to_copy = 0;
-     current_batch->total_indices_to_draw = 0;
-     // current_batch->texture_index = 0;
+     renderer->current_batch->vertices_index = 0;
+     renderer->current_batch->number_of_quads_to_copy = 0;
+     renderer->current_batch->total_indices_to_draw = 0;
+     // renderer->current_batch->texture_index = 0;
      int width, height;
      glfwGetWindowSize(renderer->window->GLFWInstance, &width, &height);
 
@@ -383,8 +404,26 @@ void renderer_draw(Renderer *renderer){
      draw_framebuffer(renderer);
 
 
-     // glDeleteTextures(1, &renderer->framebuffer_texture);
-     // glDeleteFramebuffers(1, &renderer->fbo);
+//----------------UI will be rendered after the framebuffer so that shaders related to the aspect of the game do not affect it---------------------------------------
+     {
+     rebind_registered_texture_ids(&renderer->ui_batch);
+
+          glUseProgram(renderer->ui_batch.shader_program.id);
+          glBindVertexArray(renderer->ui_batch.vao);
+          glBindBuffer(GL_ARRAY_BUFFER, renderer->ui_batch.vbo);
+
+          int bytes_to_copy = renderer->ui_batch.vertices_index * sizeof(float);
+          //We only copy the vertex data that we are going to draw instead of copying the entire preallocated buffer.
+          //This way we can preallocate a vertex buffer of any size and not affect performance.
+          glBufferSubData(GL_ARRAY_BUFFER, 0, bytes_to_copy, (void*)renderer->ui_batch.vertex_buffer);
+          glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->ibo);
+          glDrawElements(GL_TRIANGLES, renderer->ui_batch.total_indices_to_draw, GL_UNSIGNED_INT, 0);
+          glBindVertexArray(0);
+
+          renderer->ui_batch.vertices_index = 0;
+          renderer->ui_batch.number_of_quads_to_copy = 0;
+          renderer->ui_batch.total_indices_to_draw = 0;
+     }
 }
 
 void create_shader_program(ShaderProgram *program, unsigned int vertex_shader, unsigned int fragment_shader){

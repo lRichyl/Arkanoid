@@ -55,6 +55,8 @@ struct Renderer{
      glm::mat4 view;
      unsigned int index_buffer[RendererInfo::TOTAL_INDICES] = {};
      Batch main_batch;
+     Batch ui_batch;
+     Batch *current_batch;
      ShaderProgram default_shader_program;
 };
 
@@ -76,7 +78,8 @@ struct Rect{
 };
 
 Renderer* create_renderer(Window *window);
-void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alphaValue = 255);
+void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alpha_value = 255);
+void render_quad_to_ui(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alpha_value = 255);
 void change_drawing_resolution(Renderer *renderer, int width, int height);
 Texture make_texture(const char *path);
 void renderer_draw(Renderer *renderer);
