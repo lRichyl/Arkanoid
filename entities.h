@@ -60,7 +60,7 @@ struct Ball : public Entity{
           boundingBox = {position.x, position.y, 16, 12};
           clippingBox = {9 , 9, 8 , 6};
           texture = t;
-          velocity.y = speed;
+          // velocity.y = speed;
      }
      void Update(float dt, Renderer *renderer, Paddle *paddle);
      void ResetPosition(Paddle *paddle);

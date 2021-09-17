@@ -19,6 +19,7 @@ Game::Game(Renderer *r, Window *w){
      paddle.Init(V2{384, 16}, arkanoidTexture);
      ball.Init(V2{0, 0}, arkanoidTexture);
      ball.ResetPosition(&paddle);
+
 }
 
 void Game::UpdateGame(float dt){
@@ -31,7 +32,7 @@ void Game::UpdateGame(float dt){
      BallCollisionWithPaddle(dt);
 }
 
-Rect p = {100,100,32,16};
+// Rect p = {100,100,32,16};
 void Game::DrawGame(){
      //Right now we only draw the main batch, which can have 1000 quads with as many textures units as the
      //system can handle.
@@ -39,7 +40,7 @@ void Game::DrawGame(){
      paddle.Draw(renderer);
      ball.Draw(renderer);
      DrawCurrentLevel();
-     render_quad_to_ui(renderer, &p, &arkanoidTexture);
+     // render_quad_to_ui(renderer, &p, &arkanoidTexture);
 
      renderer_draw(renderer);
      swap_buffers(window);
@@ -55,9 +56,9 @@ void Game::GameLoop(float dt){
 void Game::MaybeLaunchBall(){
      if(!ball.state == BallState::ON_PADDLE) return;
      if(isKeyPressed(window, GLFW_KEY_SPACE)){
-          // ball.velocity.y = ball.speed;
-          float velocity = paddle.speed / 2 * paddle.direction.x;
-          ball.velocity.x += velocity;
+          float xVelocity = ball.speed / 2 * paddle.direction.x;
+          ball.velocity.y = ball.speed;
+          ball.velocity.x = xVelocity;
           ball.state = BallState::MOVING;
      }
 }
@@ -79,8 +80,6 @@ void Game::DrawCurrentLevel(){
                int index = (levelWidth * y) + x;
                int clipRegion = currentLevel[index];
                if(blockStateMap[index]){
-                    //These should be save on their own array and initialize before every level.
-                    // Rect boundingBox =
                     render_quad(renderer, &blocksBoundingBoxes[index], &arkanoidTexture, &blockClipRegions[clipRegion]);
                }
           }
@@ -105,21 +104,11 @@ void Game::BallCollisionWithBlocks(float dt){
           for(int x = 0; x < levelWidth; x++){
                int index = (levelWidth * y) + x;
                if(blockStateMap[index]){
-                    //Look ABOVE line 59.
-                    // Rect boundingBox = {levelOffset.x + x * blockSize.x, window->internalHeight - levelOffset.y - y * blockSize.y, blockSize.x, blockSize.y};
                     if(DoRectsCollide(ball.boundingBox, blocksBoundingBoxes[index], &penetration)){
                          blockStateMap[index] = 0;
+                         ball.Bounce(penetration);
+                         return; //Thiis is done so that you can't destroy many blocks at the same time.
                     }
-                    ball.Bounce(penetration);
-                    // if(penetration.y > 0 || penetration.y < 0) {
-                    //      ball.boundingBox.y -= penetration.y;
-                    //      ball.velocity.y *= -1;
-                    // }
-                    //
-                    // if(penetration.x > 0 || penetration.x < 0){
-                    //      ball.boundingBox.x -= penetration.x;
-                    //      ball.velocity.x *= -1;
-                    // }
                }
           }
      }
@@ -127,16 +116,33 @@ void Game::BallCollisionWithBlocks(float dt){
 
 void Game::BallCollisionWithPaddle(float dt){
      V2 penetration;
+     if(!ball.state == BallState::MOVING) return;
      if(DoRectsCollide(ball.boundingBox, paddle.boundingBox, &penetration)){
           ball.Bounce(penetration);
-          // if(penetration.y > 0 || penetration.y < 0) {
-          //      ball.boundingBox.y -= penetration.y;
-          //      ball.velocity.y *= -1;
-          // }
-          //
-          // if(penetration.x > 0 || penetration.x < 0){
-          //      ball.boundingBox.x -= penetration.x;
-          //      ball.velocity.x *= -1;
-          // }
+          float ballCenter = ball.boundingBox.x + ball.boundingBox.w / 2;
+          float ballPositionRelativeToPaddle = ballCenter - paddle.boundingBox.x;
+          float bounceCoefficient = (ballPositionRelativeToPaddle / (paddle.boundingBox.w / 2)) - 1;
+          printf("ball center: %f\n", ballCenter);
+          printf("ball position relative: %f\n", ballPositionRelativeToPaddle);
+          printf("bounce coefficient: %f\n", bounceCoefficient);
+          float bounceSpeed;
+
+          if(paddle.direction.x == 0){
+               bounceSpeed = ball.speed;
+
+               if (bounceCoefficient < 0) {
+                    bounceSpeed *= -1;
+               }
+               ball.velocity.x = bounceSpeed;
+          }else{
+               if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = paddle.speed;
+               else bounceSpeed = 0;
+               float xVelocity = sqrt(pow(ball.velocity.y, 2) + pow(bounceSpeed, 2));
+               xVelocity *= bounceCoefficient;
+               xVelocity += paddle.speed * paddle.direction.x;
+               ball.velocity.x = xVelocity;
+          }
+
+
      }
 }

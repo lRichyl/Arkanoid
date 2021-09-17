@@ -347,7 +347,7 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
 }
 
 //Things drawn with this function do no get drawn on the same framebuffer as the main render_quad function so it does not get
-//the postprocessing effects.
+//the postprocessing effects. Mainly used to do UI stuff.
 void render_quad_to_ui(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirror, float alpha_value){
      render_quad_on_batch(renderer, &renderer->ui_batch, position, texture, clip_region, mirror, alpha_value);
 }

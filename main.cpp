@@ -41,7 +41,7 @@ int main(){
      LARGE_INTEGER start_time = get_time_counter();
 
      Game game = Game(renderer, window);
-     bool showFPS = true;
+     bool showFPS = false;
      glfwSetWindowSizeCallback(window->GLFWInstance,WindowResizeCallback);
 
      while(!glfwWindowShouldClose(window->GLFWInstance)){
@@ -92,8 +92,10 @@ int main(){
                printf("Real FPS: %f ", 1.f / (ms_per_frame / 1000.f));
                printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
           }
-          samples[sample_count] = ms_per_frame;
-          sample_count++;
+          if(showFPS){
+               samples[sample_count] = ms_per_frame;
+               sample_count++;
+          }
           Sleep(1);
      }
      glfwTerminate();
