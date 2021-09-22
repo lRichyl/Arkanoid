@@ -5,6 +5,7 @@
 #include "math.h"
 #include "collision.h"
 #include "input.h"
+#include "text.h"
 
 Game::Game(Renderer *r, Window *w){
      renderer = r;
@@ -19,7 +20,6 @@ Game::Game(Renderer *r, Window *w){
      paddle.Init(V2{384, 16}, arkanoidTexture);
      ball.Init(V2{0, 0}, arkanoidTexture);
      ball.ResetPosition(&paddle);
-
 }
 
 void Game::UpdateGame(float dt){
@@ -32,14 +32,12 @@ void Game::UpdateGame(float dt){
      BallCollisionWithPaddle(dt);
 }
 
-// Rect p = {100,100,32,16};
+// Rect p = {500,100,32,16};
 void Game::DrawGame(){
-     //Right now we only draw the main batch, which can have 1000 quads with as many textures units as the
-     //system can handle.
-     //TODO: Add more batches to draw on when we run out of texture units or surpass 1000 quads.
      paddle.Draw(renderer);
      ball.Draw(renderer);
      DrawCurrentLevel();
+
      // render_quad_to_ui(renderer, &p, &arkanoidTexture);
 
      renderer_draw(renderer);
@@ -56,6 +54,7 @@ void Game::GameLoop(float dt){
 void Game::MaybeLaunchBall(){
      if(!ball.state == BallState::ON_PADDLE) return;
      if(isKeyPressed(window, GLFW_KEY_SPACE)){
+          // printf("HOLA\n");
           float xVelocity = ball.speed / 2 * paddle.direction.x;
           ball.velocity.y = ball.speed;
           ball.velocity.x = xVelocity;
@@ -122,9 +121,9 @@ void Game::BallCollisionWithPaddle(float dt){
           float ballCenter = ball.boundingBox.x + ball.boundingBox.w / 2;
           float ballPositionRelativeToPaddle = ballCenter - paddle.boundingBox.x;
           float bounceCoefficient = (ballPositionRelativeToPaddle / (paddle.boundingBox.w / 2)) - 1;
-          printf("ball center: %f\n", ballCenter);
-          printf("ball position relative: %f\n", ballPositionRelativeToPaddle);
-          printf("bounce coefficient: %f\n", bounceCoefficient);
+          // printf("ball center: %f\n", ballCenter);
+          // printf("ball position relative: %f\n", ballPositionRelativeToPaddle);
+          // printf("bounce coefficient: %f\n", bounceCoefficient);
           float bounceSpeed;
 
           if(paddle.direction.x == 0){
@@ -133,6 +132,10 @@ void Game::BallCollisionWithPaddle(float dt){
                if (bounceCoefficient < 0) {
                     bounceSpeed *= -1;
                }
+               else if(bounceCoefficient == 0){
+                    bounceSpeed = 0;
+               }
+               // printf("bounce coefficient: %f\n", bounceCoefficient);
                ball.velocity.x = bounceSpeed;
           }else{
                if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = paddle.speed;

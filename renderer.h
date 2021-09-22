@@ -12,6 +12,7 @@ struct RendererInfo{
      static const int INDICES_PER_QUAD = 6;
      static const int TOTAL_INDICES =  QUADS_PER_BATCH * INDICES_PER_QUAD;
      static int MAX_TEXTURE_UNITS_PER_BATCH;
+     static const int NUMBER_OF_BATCHES = 5;
 };
 
 
@@ -54,7 +55,9 @@ struct Renderer{
      //Use this matrix later to move the camera.
      glm::mat4 view;
      unsigned int index_buffer[RendererInfo::TOTAL_INDICES] = {};
+     int batch_index = 0;
      Batch main_batch;
+     Batch batches[RendererInfo::NUMBER_OF_BATCHES];
      Batch ui_batch;
      Batch *current_batch;
      ShaderProgram default_shader_program;

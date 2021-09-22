@@ -13,7 +13,9 @@ void main()
 	for(int i = 0; i < u_max_texture_units; i++){
 		if(i == int(outTexID)){
 			fragColor = texture2D(u_textures[i], outTexCoord);
-			fragColor.w = outAlphaValue;
+			if(outAlphaValue < 1 && fragColor.w != 0){
+				fragColor.w = outAlphaValue;
+			}
 			break;
 		}
 	}

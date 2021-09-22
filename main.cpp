@@ -4,10 +4,14 @@
 #include "renderer.h"
 #include "timer.h"
 #include "game.h"
+#include "text.h"
 #include <cmath>
+#include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
+#define ST_TRUETYPE_IMPLEMENTATION
 #include "stb_image.h"
+#include "stb_truetype.h"
 
 
 void WindowResizeCallback(GLFWwindow* window, int width, int height){
@@ -41,7 +45,9 @@ int main(){
      LARGE_INTEGER start_time = get_time_counter();
 
      Game game = Game(renderer, window);
-     bool showFPS = false;
+     bool showFPS = true;
+     // Texture font = make_texture("assets/fonts/font.png");
+     // Text FPSText = Text(font, 12, V2{0,float(window->internalHeight)});
      glfwSetWindowSizeCallback(window->GLFWInstance,WindowResizeCallback);
 
      while(!glfwWindowShouldClose(window->GLFWInstance)){
@@ -91,12 +97,15 @@ int main(){
 
                printf("Real FPS: %f ", 1.f / (ms_per_frame / 1000.f));
                printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
+
           }
           if(showFPS){
                samples[sample_count] = ms_per_frame;
                sample_count++;
           }
-          Sleep(1);
+          // FPSText.Render(renderer, "Pepe pecas pica papas con un pico");
+
+          // Sleep(1);
      }
      glfwTerminate();
      destroy_window(window);

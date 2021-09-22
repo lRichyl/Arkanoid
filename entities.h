@@ -2,6 +2,7 @@
 #define PADDLE_H
 #include "renderer.h"
 #include "math.h"
+#include <map>
 
 enum Blocks{
      BLOCKS_BLACK,
@@ -69,6 +70,7 @@ struct Ball : public Entity{
      BallState state = ON_PADDLE;
      float speed = 200;
      V2 velocity = {0, 0};
+     
 };
 
 

@@ -44,7 +44,7 @@ void change_drawing_resolution(Renderer *renderer, int width, int height){
      glGenTextures(1, &renderer->framebuffer_texture);
      glActiveTexture(GL_TEXTURE0);
      glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
-     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -65,7 +65,7 @@ static void initialize_framebuffer(Renderer *renderer){
      glGenTextures(1, &renderer->framebuffer_texture);
      glActiveTexture(GL_TEXTURE0);
      glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
-     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (int)renderer->drawing_resolution.x, (int)renderer->drawing_resolution.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int)renderer->drawing_resolution.x, (int)renderer->drawing_resolution.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -185,11 +185,11 @@ void initialize_batch_texture_sampler(Batch *batch){
 }
 
 void load_mvp_to_shader(Renderer *renderer){
-     glUseProgram(renderer->main_batch.shader_program.id);
-     int projection_uniform_id = glGetUniformLocation(renderer->main_batch.shader_program.id, ("u_projection"));
+     glUseProgram(renderer->default_shader_program.id);
+     int projection_uniform_id = glGetUniformLocation(renderer->default_shader_program.id, ("u_projection"));
      glUniformMatrix4fv(projection_uniform_id, 1, GL_FALSE, glm::value_ptr(renderer->projection));
 
-     int view_uniform_id = glGetUniformLocation(renderer->main_batch.shader_program.id, ("u_view"));
+     int view_uniform_id = glGetUniformLocation(renderer->default_shader_program.id, ("u_view"));
      glUniformMatrix4fv(view_uniform_id, 1, GL_FALSE, glm::value_ptr(renderer->view));
      glUseProgram(0);
 }
@@ -211,7 +211,7 @@ void initialize_renderer(Renderer *renderer, Window *window){
      renderer->view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)); //Modify this in real time to move the camera.
      renderer->drawing_resolution.x = window->internalWidth;
      renderer->drawing_resolution.y = window->internalHeight;
-     renderer->current_batch = &renderer->main_batch;
+     renderer->current_batch = &renderer->batches[0];
      compile_shader_program(&renderer->default_shader_program, "assets/shaders/default_vertex_shader.txt", "assets/shaders/default_fragment_shader.txt");
      compile_shader_program(&renderer->framebuffer_shader_program, "assets/shaders/framebuffer_vertex_shader.txt", "assets/shaders/framebuffer_fragment_shader.txt");
      create_framebuffer_buffers(renderer);
@@ -219,8 +219,10 @@ void initialize_renderer(Renderer *renderer, Window *window){
 
      initialize_renderer_index_buffer(renderer);
      //This should be in a loop when we add multiple batches to initialize them.
-     initialize_batch_vertex_buffers_and_arrays(&renderer->main_batch, renderer);
-     initialize_batch_texture_sampler(&renderer->main_batch);
+     for(int i = 0; i < RendererInfo::NUMBER_OF_BATCHES; ++i){
+          initialize_batch_vertex_buffers_and_arrays(&renderer->batches[i], renderer);
+          initialize_batch_texture_sampler(&renderer->batches[i]);
+     }
      //This needs to happen after the shader program is compiled.
 
      initialize_batch_vertex_buffers_and_arrays(&renderer->ui_batch, renderer);
@@ -336,13 +338,25 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
 
           assert(batch->number_of_quads_to_copy <= RendererInfo::QUADS_PER_BATCH);
 
+
      }
+
 }
 
 void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirror, float alpha_value){
-     //This is temporary and it should actually select a the next available batch when the current gets filled or the
-     //max amount of textures get bound.
-     Batch *batch = &renderer->main_batch;
+     //This is temporary and it should actually select the next available batch when the current one gets filled or the
+     //max amount of textures gets bound.
+     if(renderer->current_batch->number_of_quads_to_copy == RendererInfo::QUADS_PER_BATCH || renderer->current_batch->texture_index == RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH){
+
+          // renderer->current_batch->texture_index = 0;
+          renderer->batch_index++;
+          renderer->current_batch = &renderer->batches[renderer->batch_index];
+          // if(renderer->batch_index > 4) renderer->batch_index = 0;
+     }
+     // printf("Batch: %d,  Texture Index: %d\n", renderer->batch_index, renderer->current_batch->texture_index);
+     assert(renderer->batch_index < 5);
+     Batch *batch = renderer->current_batch;
+
      render_quad_on_batch(renderer, batch, position, texture, clip_region, mirror, alpha_value);
 }
 
@@ -352,8 +366,22 @@ void render_quad_to_ui(Renderer *renderer, Rect *position, Texture *texture, Rec
      render_quad_on_batch(renderer, &renderer->ui_batch, position, texture, clip_region, mirror, alpha_value);
 }
 
+static void clear_batches(Renderer *renderer){
+     renderer->current_batch = &renderer->batches[0];
+     renderer->batch_index = 0;
+     //We clear the batches from any registered textures and reset the texture index so that in the next
+     //frame we can repopulate the batches with new textures.
+     for(int i = 0; i < RendererInfo::NUMBER_OF_BATCHES; ++i){
+          renderer->batches[i].texture_index = 0;
+          for(int j = 0; j < RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH; ++j){
+               renderer->batches[i].registered_textures_ids[j] = 0;
+          }
+     }
+}
+
 void renderer_draw(Renderer *renderer){
      // Batch *current_batch = &renderer->main_batch;
+
 
      //We need to rebind the registered textures in each batch before drawing to the framebuffer.
      //If we don't the batch´s textures get overwritten by the framebuffer texture. And we don't want
@@ -361,23 +389,33 @@ void renderer_draw(Renderer *renderer){
      //What happened was that we used the texture unit 0 for the frambuffer texture, so the first texture
      //of the batch would get overwritten.
      //This will have to be done for every batch when we implement multiple batches.
-     rebind_registered_texture_ids(renderer->current_batch);
-
      glViewport(0,0,(int)renderer->drawing_resolution.x, (int)renderer->drawing_resolution.y);
-     glUseProgram(renderer->current_batch->shader_program.id);
+     glUseProgram(renderer->default_shader_program.id);
      glBindFramebuffer(GL_FRAMEBUFFER, renderer->fbo);
+     glEnable(GL_BLEND);
+     // glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
      glEnable(GL_DEPTH_TEST);
-     glBindVertexArray(renderer->current_batch->vao);
-     glBindBuffer(GL_ARRAY_BUFFER, renderer->current_batch->vbo);
+     for(int i = 0; i < RendererInfo::NUMBER_OF_BATCHES; ++i){
+          rebind_registered_texture_ids(&renderer->batches[i]);
 
-     int bytes_to_copy = renderer->current_batch->vertices_index * sizeof(float);
-     //We only copy the vertex data that we are going to draw instead of copying the entire preallocated buffer.
-     //This way we can preallocate a vertex buffer of any size and not affect performance.
-     glBufferSubData(GL_ARRAY_BUFFER, 0, bytes_to_copy, (void*)renderer->current_batch->vertex_buffer);
-     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->ibo);
-     glDrawElements(GL_TRIANGLES, renderer->current_batch->total_indices_to_draw, GL_UNSIGNED_INT, 0);
-     glBindVertexArray(0);
+          glBindVertexArray(renderer->batches[i].vao);
+          glBindBuffer(GL_ARRAY_BUFFER, renderer->batches[i].vbo);
+
+          int bytes_to_copy = renderer->batches[i].vertices_index * sizeof(float);
+          //We only copy the vertex data that we are going to draw instead of copying the entire preallocated buffer.
+          //This way we can preallocate a vertex buffer of any size and not affect performance.
+          glBufferSubData(GL_ARRAY_BUFFER, 0, bytes_to_copy, (void*)renderer->batches[i].vertex_buffer);
+          glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->ibo);
+          glDrawElements(GL_TRIANGLES, renderer->batches[i].total_indices_to_draw, GL_UNSIGNED_INT, 0);
+          glBindVertexArray(0);
+
+          renderer->batches[i].vertices_index = 0;
+          renderer->batches[i].number_of_quads_to_copy = 0;
+          renderer->batches[i].total_indices_to_draw = 0;
+          // renderer->batches[i].texture_index = 0;
+
+     }
      glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
@@ -385,18 +423,7 @@ void renderer_draw(Renderer *renderer){
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
      glDisable(GL_DEPTH_TEST);
 
-
-
-     // glUseProgram(renderer->framebuffer_shader_program.id);
-     // int framebuffer_texture = glGetUniformLocation(renderer->framebuffer_shader_program.id, "screenTexture");
-     // glActiveTexture(GL_TEXTURE0 + renderer->current_batch->texture_index);
-     // glBindTexture(GL_TEXTURE_2D, renderer->framebuffer_texture);
-     // glUniform1i(framebuffer_texture, 0);
-
-     renderer->current_batch->vertices_index = 0;
-     renderer->current_batch->number_of_quads_to_copy = 0;
-     renderer->current_batch->total_indices_to_draw = 0;
-     // renderer->current_batch->texture_index = 0;
+     // renderer->batches[i].texture_index = 0;
      int width, height;
      glfwGetWindowSize(renderer->window->GLFWInstance, &width, &height);
 
@@ -424,6 +451,9 @@ void renderer_draw(Renderer *renderer){
           renderer->ui_batch.number_of_quads_to_copy = 0;
           renderer->ui_batch.total_indices_to_draw = 0;
      }
+
+     clear_batches(renderer);
+
 }
 
 void create_shader_program(ShaderProgram *program, unsigned int vertex_shader, unsigned int fragment_shader){
