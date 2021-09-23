@@ -9,7 +9,7 @@
 #include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
-#define ST_TRUETYPE_IMPLEMENTATION
+#define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_image.h"
 #include "stb_truetype.h"
 
@@ -49,6 +49,7 @@ int main(){
      // Texture font = make_texture("assets/fonts/font.png");
      // Text FPSText = Text(font, 12, V2{0,float(window->internalHeight)});
      glfwSetWindowSizeCallback(window->GLFWInstance,WindowResizeCallback);
+     Font test = Font("assets/fonts/Simvoni.ttf", 20);
 
      while(!glfwWindowShouldClose(window->GLFWInstance)){
 
@@ -86,6 +87,9 @@ int main(){
           }
           dt = ms_per_frame / 1000.0f;
           int fps = round(1.0f/((waited_time + ms_per_frame)/1000.0f));
+          float realfps;
+          // std::string fps_string;
+          // char *c;
           if(showFPS && sample_count == NUM_SAMPLES - 1){
                float sum = 0;
                for(int i = 0; i < sample_count; i++){
@@ -95,10 +99,15 @@ int main(){
                int average_fps = 1.f / (average_ms / 1000.f);
                sample_count = 0;
 
-               printf("Real FPS: %f ", 1.f / (ms_per_frame / 1000.f));
-               printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
+               // printf("Real FPS: %f ", 1.f / (ms_per_frame / 1000.f));
+               // printf("%f ms , %i FPS\n",waited_time + ms_per_frame, fps);
+               realfps =  1.f / (ms_per_frame / 1000.f);
 
           }
+          std::string fps_string = "FPS: "  + std::to_string((int)realfps);
+          char *c = &fps_string[0];
+          render_text(renderer, &test, c, V2 {0 , 599}, 32);
+
           if(showFPS){
                samples[sample_count] = ms_per_frame;
                sample_count++;

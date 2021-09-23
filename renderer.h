@@ -8,7 +8,7 @@
 
 struct RendererInfo{
      static const int QUADS_PER_BATCH = 1000;
-     static const int FLOATS_PER_QUAD = 24;
+     static const int FLOATS_PER_QUAD = 36;
      static const int INDICES_PER_QUAD = 6;
      static const int TOTAL_INDICES =  QUADS_PER_BATCH * INDICES_PER_QUAD;
      static int MAX_TEXTURE_UNITS_PER_BATCH;
@@ -81,8 +81,8 @@ struct Rect{
 };
 
 Renderer* create_renderer(Window *window);
-void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alpha_value = 255);
-void render_quad_to_ui(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alpha_value = 255);
+void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alpha_value = 255, V3 color = {1.0f,1.0f,1.0f}, bool mirrorY = false);
+void render_quad_to_ui(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alpha_value = 255, V3 color = {1.0f,1.0f,1.0f}, bool mirrorY = false);
 void change_drawing_resolution(Renderer *renderer, int width, int height);
 Texture make_texture(const char *path);
 void renderer_draw(Renderer *renderer);

@@ -59,18 +59,21 @@ struct Paddle : public Entity{
 struct Ball : public Entity{
      void Init(V2 position, Texture t){
           boundingBox = {position.x, position.y, 16, 12};
-          clippingBox = {9 , 9, 8 , 6};
+          clippingBox = {9 , 9, 8 , 7};
           texture = t;
           // velocity.y = speed;
      }
      void Update(float dt, Renderer *renderer, Paddle *paddle);
      void ResetPosition(Paddle *paddle);
      void Bounce(V2 penetration);
+     void Draw(Renderer *renderer){
+          render_quad(renderer, &boundingBox, &texture, &clippingBox, false, 255, V3 {1.0f,0.0f,0.0f});
+     }
      // Texture = texture;
      BallState state = ON_PADDLE;
      float speed = 200;
      V2 velocity = {0, 0};
-     
+
 };
 
 

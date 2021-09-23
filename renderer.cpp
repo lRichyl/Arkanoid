@@ -153,13 +153,15 @@ static void initialize_batch_vertex_buffers_and_arrays(Batch *batch, Renderer *r
      glBufferData(GL_ARRAY_BUFFER, sizeof(batch->vertex_buffer), nullptr, GL_DYNAMIC_DRAW);
 
      glEnableVertexAttribArray(0);
-     glVertexAttribPointer(0, 2, GL_FLOAT, false, 6 * sizeof(float), (void*)0);
+     glVertexAttribPointer(0, 2, GL_FLOAT, false, 9 * sizeof(float), (void*)0);
      glEnableVertexAttribArray(1);
-     glVertexAttribPointer(1, 2, GL_FLOAT, false, 6 * sizeof(float), (void*)( 2 * sizeof(float)));
+     glVertexAttribPointer(1, 2, GL_FLOAT, false, 9 * sizeof(float), (void*)( 2 * sizeof(float)));
      glEnableVertexAttribArray(2);
-     glVertexAttribPointer(2, 1, GL_FLOAT, false, 6 * sizeof(float), (void*)( 4 * sizeof(float)));
+     glVertexAttribPointer(2, 1, GL_FLOAT, false, 9 * sizeof(float), (void*)( 4 * sizeof(float)));
      glEnableVertexAttribArray(3);
-     glVertexAttribPointer(3, 1, GL_FLOAT, false, 6 * sizeof(float), (void*)( 5 * sizeof(float)));
+     glVertexAttribPointer(3, 1, GL_FLOAT, false, 9 * sizeof(float), (void*)( 5 * sizeof(float)));
+     glEnableVertexAttribArray(4);
+     glVertexAttribPointer(4, 3, GL_FLOAT, false, 9 * sizeof(float), (void*)( 6 * sizeof(float)));
 
 
      glBindVertexArray(0);
@@ -245,7 +247,7 @@ void destroy_renderer(Renderer *renderer){
      delete renderer;
 }
 
-static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *position, Texture *texture, Rect *clip_region, bool mirror, float alpha_value){
+static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *position, Texture *texture, Rect *clip_region, bool mirrorX, float alpha_value, V3 color, bool mirrorY){
      Window *win = renderer->window;
      V2 top_left_clip;
      V2 bottom_left_clip;
@@ -278,9 +280,14 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
 
 
      }
-     if(mirror){
+     if(mirrorX){
           V2::SwitchXComponents(&top_left_clip, &top_right_clip);
           V2::SwitchXComponents(&bottom_left_clip, &bottom_right_clip);
+     }
+
+     if(mirrorY){
+          V2::SwitchYComponents(&top_left_clip, &bottom_left_clip);
+          V2::SwitchYComponents(&top_right_clip, &bottom_right_clip);
      }
 
      //We do this so that if we try to draw outside the window we don't add data to the vertex buffer.
@@ -309,27 +316,39 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
           batch->vertex_buffer[batch->vertices_index + 3] = top_left_clip.y;
           batch->vertex_buffer[batch->vertices_index + 4] = texture_slot_id;
           batch->vertex_buffer[batch->vertices_index + 5] = normalizedAlphaValue;
+          batch->vertex_buffer[batch->vertices_index + 6] = color.x;
+          batch->vertex_buffer[batch->vertices_index + 7] = color.y;
+          batch->vertex_buffer[batch->vertices_index + 8] = color.z;
 
-          batch->vertex_buffer[batch->vertices_index + 6] =  position->x;
-          batch->vertex_buffer[batch->vertices_index + 7] = position->y - position->h;
-          batch->vertex_buffer[batch->vertices_index + 8] = bottom_left_clip.x;
-          batch->vertex_buffer[batch->vertices_index + 9] = bottom_left_clip.y;
-          batch->vertex_buffer[batch->vertices_index + 10] = texture_slot_id;
-          batch->vertex_buffer[batch->vertices_index + 11] = normalizedAlphaValue;
-
-          batch->vertex_buffer[batch->vertices_index + 12] = position->x + position->w;
-          batch->vertex_buffer[batch->vertices_index + 13] = position->y - position->h;
-          batch->vertex_buffer[batch->vertices_index + 14] = bottom_right_clip.x;
-          batch->vertex_buffer[batch->vertices_index + 15] = bottom_right_clip.y;
-          batch->vertex_buffer[batch->vertices_index + 16] = texture_slot_id;
-          batch->vertex_buffer[batch->vertices_index + 17] = normalizedAlphaValue;
+          batch->vertex_buffer[batch->vertices_index + 9] =  position->x;
+          batch->vertex_buffer[batch->vertices_index + 10] = position->y - position->h;
+          batch->vertex_buffer[batch->vertices_index + 11] = bottom_left_clip.x;
+          batch->vertex_buffer[batch->vertices_index + 12] = bottom_left_clip.y;
+          batch->vertex_buffer[batch->vertices_index + 13] = texture_slot_id;
+          batch->vertex_buffer[batch->vertices_index + 14] = normalizedAlphaValue;
+          batch->vertex_buffer[batch->vertices_index + 15] = color.x;
+          batch->vertex_buffer[batch->vertices_index + 16] = color.y;
+          batch->vertex_buffer[batch->vertices_index + 17] = color.z;
 
           batch->vertex_buffer[batch->vertices_index + 18] = position->x + position->w;
-          batch->vertex_buffer[batch->vertices_index + 19] = position->y;
-          batch->vertex_buffer[batch->vertices_index + 20] = top_right_clip.x;
-          batch->vertex_buffer[batch->vertices_index + 21] = top_right_clip.y;
+          batch->vertex_buffer[batch->vertices_index + 19] = position->y - position->h;
+          batch->vertex_buffer[batch->vertices_index + 20] = bottom_right_clip.x;
+          batch->vertex_buffer[batch->vertices_index + 21] = bottom_right_clip.y;
           batch->vertex_buffer[batch->vertices_index + 22] = texture_slot_id;
           batch->vertex_buffer[batch->vertices_index + 23] = normalizedAlphaValue;
+          batch->vertex_buffer[batch->vertices_index + 24] = color.x;
+          batch->vertex_buffer[batch->vertices_index + 25] = color.y;
+          batch->vertex_buffer[batch->vertices_index + 26] = color.z;
+
+          batch->vertex_buffer[batch->vertices_index + 27] = position->x + position->w;
+          batch->vertex_buffer[batch->vertices_index + 28] = position->y;
+          batch->vertex_buffer[batch->vertices_index + 29] = top_right_clip.x;
+          batch->vertex_buffer[batch->vertices_index + 30] = top_right_clip.y;
+          batch->vertex_buffer[batch->vertices_index + 31] = texture_slot_id;
+          batch->vertex_buffer[batch->vertices_index + 32] = normalizedAlphaValue;
+          batch->vertex_buffer[batch->vertices_index + 33] = color.x;
+          batch->vertex_buffer[batch->vertices_index + 34] = color.y;
+          batch->vertex_buffer[batch->vertices_index + 35] = color.z;
 
 
           batch->vertices_index += RendererInfo::FLOATS_PER_QUAD;
@@ -343,7 +362,7 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
 
 }
 
-void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirror, float alpha_value){
+void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirrorX, float alpha_value, V3 color , bool mirrorY){
      //This is temporary and it should actually select the next available batch when the current one gets filled or the
      //max amount of textures gets bound.
      if(renderer->current_batch->number_of_quads_to_copy == RendererInfo::QUADS_PER_BATCH || renderer->current_batch->texture_index == RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH){
@@ -357,13 +376,13 @@ void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *cli
      assert(renderer->batch_index < 5);
      Batch *batch = renderer->current_batch;
 
-     render_quad_on_batch(renderer, batch, position, texture, clip_region, mirror, alpha_value);
+     render_quad_on_batch(renderer, batch, position, texture, clip_region, mirrorX, alpha_value, color, mirrorY);
 }
 
 //Things drawn with this function do no get drawn on the same framebuffer as the main render_quad function so it does not get
 //the postprocessing effects. Mainly used to do UI stuff.
-void render_quad_to_ui(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirror, float alpha_value){
-     render_quad_on_batch(renderer, &renderer->ui_batch, position, texture, clip_region, mirror, alpha_value);
+void render_quad_to_ui(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region, bool mirrorX, float alpha_value, V3 color, bool mirrorY){
+     render_quad_on_batch(renderer, &renderer->ui_batch, position, texture, clip_region, mirrorX, alpha_value, color, mirrorY);
 }
 
 static void clear_batches(Renderer *renderer){
@@ -419,7 +438,7 @@ void renderer_draw(Renderer *renderer){
      glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
-     // glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+     // glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
      glDisable(GL_DEPTH_TEST);
 
