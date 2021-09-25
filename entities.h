@@ -5,7 +5,8 @@
 #include <map>
 
 enum Blocks{
-     BLOCKS_BLACK,
+     BLOCKS_EMPTY,
+     BLOCKS_BLACK, // Black blocks are indestructible
      BLOCKS_PINK,
      BLOCKS_PURPLE,
      BLOCKS_BLUE,
@@ -66,9 +67,9 @@ struct Ball : public Entity{
      void Update(float dt, Renderer *renderer, Paddle *paddle);
      void ResetPosition(Paddle *paddle);
      void Bounce(V2 penetration);
-     void Draw(Renderer *renderer){
-          render_quad(renderer, &boundingBox, &texture, &clippingBox, false, 255, V3 {1.0f,0.0f,0.0f});
-     }
+     // void Draw(Renderer *renderer){
+     //      render_quad(renderer, &boundingBox, &texture, &clippingBox, false, 255, V3 {1.0f,0.0f,0.0f});
+     // }
      // Texture = texture;
      BallState state = ON_PADDLE;
      float speed = 200;

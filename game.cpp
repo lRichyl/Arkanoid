@@ -8,53 +8,52 @@
 #include "text.h"
 #include "stb_truetype.h"
 
-
-// stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
-// GLuint ftex;
-//
-//
-// void my_stbtt_initfont(Texture *tex)
-// {
-//      unsigned char ttf_buffer[1<<15];
-//      unsigned char temp_bitmap[512*512];
-//
-//      fread(ttf_buffer, 1, 1<<15, fopen("assets/fonts/NugoSansLight.ttf", "rb"));
-//      stbtt_BakeFontBitmap(ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
-//      // can free ttf_buffer at this point
-//      glGenTextures(1, &ftex);
-//      glBindTexture(GL_TEXTURE_2D, ftex);
-//      glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512,512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
-//      // can free temp_bitmap at this point
-//      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//      tex->id = ftex;
-// }
-
-
 Game::Game(Renderer *r, Window *w){
      renderer = r;
      window = w;
      levelList[0] = &level1[0];
+     levelList[1] = &level2[0];
      currentLevel = levelList[0];
      assert(currentLevel);
-     CalculateNumberOfBlocksToWin(); //This should be calculated once at the start of every level
-     GenerateBlocksBoundingBoxes();
+
      paddle.Init(V2{384, 16}, arkanoidTexture);
      ball.Init(V2{0, 0}, arkanoidTexture);
      ball.ResetPosition(&paddle);
+     showFPS = true;
 }
 
 void Game::UpdateGame(float dt){
      //When we load a new level the numberOfBlocksToWin and the blocksBoundingBoxes must be
      //recalculated.
+     switch(state){
+          case GAME_LEVEL_LOADING:{
+               CalculateNumberOfBlocksToWin(); //This should be calculated once at the start of every level
+               GenerateBlocksBoundingBoxes();
+               ResetBlocksState();
+               state = GameState::GAME_PLAYING;
+               break;
+          }
+          case GAME_PLAYING:{
+               std::string blocksToWinString = std::to_string(numberOfBlocksToWin);
+               char *blocksToWinCString = &blocksToWinString[0];
+               render_text(renderer, &debugFont, blocksToWinCString, V2{400, 600});
+               paddle.Update(dt, renderer);
+               ball.Update(dt, renderer, &paddle);
+               MaybeLaunchBall();
 
-     paddle.Update(dt, renderer);
-     ball.Update(dt, renderer, &paddle);
-     MaybeLaunchBall();
+               //Collisions
+               BallCollisionWithBlocks(dt);
+               BallCollisionWithPaddle(dt);
+               if(numberOfBlocksToWin == 0){
+                    currentLevel = levelList[1];
+                    state = GameState::GAME_LEVEL_LOADING;
+               }
+          }
+               break;
+          }
+     }
 
-     //Collisions
-     BallCollisionWithBlocks(dt);
-     BallCollisionWithPaddle(dt);
-}
+
 
 Rect p = {0,600,512,512};
 void Game::DrawGame(){
@@ -92,8 +91,27 @@ void Game::GenerateBlocksBoundingBoxes(){
      for(int y = 0; y < levelHeight; y++){
           for(int x = 0; x < levelWidth; x++){
                int index = (levelWidth * y) + x;
-               Rect boundingBox = {levelOffset.x + x * blockSize.x, window->internalHeight - levelOffset.y - y * blockSize.y, blockSize.x, blockSize.y};
-               blocksBoundingBoxes[index] = boundingBox;
+               // printf("%d\n", currentLevel[index]);
+               if(currentLevel[index] != Blocks::BLOCKS_EMPTY){
+                    Rect boundingBox = {levelOffset.x + x * blockSize.x, window->internalHeight - levelOffset.y - y * blockSize.y, blockSize.x, blockSize.y};
+                    blocksBoundingBoxes[index] = boundingBox;
+               }else{
+                    blocksBoundingBoxes[index] = {0,0,0,0};
+               }
+          }
+     }
+}
+
+void Game::ResetBlocksState(){
+     for(int y = 0; y < levelHeight; y++){
+          for(int x = 0; x < levelWidth; x++){
+               int index = (levelWidth * y) + x;
+               // printf("%d\n", currentLevel[index]);
+               if(currentLevel[index] != Blocks::BLOCKS_EMPTY){
+                    blockStateMap[index] = 1;
+               }else{
+                    blockStateMap[index] = 0;
+               }
           }
      }
 }
@@ -103,7 +121,7 @@ void Game::DrawCurrentLevel(){
           for(int x = 0; x < levelWidth; x++){
                int index = (levelWidth * y) + x;
                int clipRegion = currentLevel[index];
-               if(blockStateMap[index]){
+               if(blockStateMap[index] > 0){
                     render_quad(renderer, &blocksBoundingBoxes[index], &arkanoidTexture, &blockClipRegions[clipRegion]);
                }
           }
@@ -115,7 +133,7 @@ void Game::CalculateNumberOfBlocksToWin(){
      for(int y = 0; y < levelHeight; y++){
           for(int x = 0; x < levelWidth; x++){
                int index = (levelWidth * y) + x;
-               if(currentLevel[index] != Blocks::BLOCKS_BLACK){
+               if(currentLevel[index] != Blocks::BLOCKS_BLACK && currentLevel[index] != Blocks::BLOCKS_EMPTY){
                     numberOfBlocksToWin++;
                }
           }
@@ -129,9 +147,13 @@ void Game::BallCollisionWithBlocks(float dt){
                int index = (levelWidth * y) + x;
                if(blockStateMap[index]){
                     if(DoRectsCollide(ball.boundingBox, blocksBoundingBoxes[index], &penetration)){
-                         blockStateMap[index] = 0;
-                         numberOfBlocksToWin--;;
+                         //Black blocks are indestructible.
+                         if(currentLevel[index] != Blocks::BLOCKS_BLACK){
+                              blockStateMap[index] = 0;
+                              numberOfBlocksToWin--;
+                         }
                          ball.Bounce(penetration);
+                         // Bounce(&ball.boundingBox,&ball.velocity, penetration);
                          return; //Thiis is done so that you can't destroy many blocks at the same time.
                     }
                }

@@ -7,7 +7,6 @@
 
 
 bool DoRectsCollide(Rect b1, Rect b2, V2 *penetration);
-	// void checkCollisions(CollisionTileMap *collisionLayer);
-
+// void Bounce(Rect *boundingBox, V2 *velocity, V2 penetration);
 
 #endif

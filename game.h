@@ -7,6 +7,11 @@
 #include <vector>
 #include <array>
 
+enum GameState{
+     GAME_LEVEL_LOADING,
+     GAME_PLAYING
+};
+
 struct Game{
      void UpdateGame(float dt);
      void DrawGame();
@@ -17,17 +22,20 @@ struct Game{
      void DrawBall();
      void CalculateNumberOfBlocksToWin();
      void GenerateBlocksBoundingBoxes();
+     void ResetBlocksState();
      void BallCollisionWithBlocks(float dt);
      void BallCollisionWithPaddle(float dt);
      void MaybeLaunchBall();
 
+     GameState state = GameState::GAME_LEVEL_LOADING;
      Renderer *renderer;
      Window *window;
      Texture arkanoidTexture = make_texture("assets/textures/Arkanoid blocks.png");
-     Font test = Font("assets/fonts/Simvoni.ttf", 20);
+     Font debugFont = Font("assets/fonts/Simvoni.ttf", 20);
 // Texture tex;
      Rect blockClipRegions[Blocks::BLOCKS_COUNT] =
-                               {Rect {32, 0, 32, 16},
+                               {Rect {0, 0, 0, 0},
+                                Rect {32, 0, 32, 16},
                                 Rect {64, 0, 32, 16},
                                 Rect {96, 0, 32, 16},
                                 Rect {128,0, 32, 16},
@@ -36,6 +44,7 @@ struct Game{
                                 Rect {224,0, 32, 16}};
      Paddle paddle;
      Ball ball;
+     bool showFPS = false;
      static const int levelWidth = 12;
      static const int levelHeight = 7;
      static const int maxNumberOfBlocksBoundingBoxes = 100;
@@ -48,23 +57,29 @@ struct Game{
      Rect blocksBoundingBoxes[maxNumberOfBlocksBoundingBoxes];
      V2 levelOffset = {22, 30};
 
-     int level1[levelWidth * levelHeight] ={0,0,0,0,0,0,0,0,0,0,0,0,
-                                     1,1,1,1,1,1,1,1,1,1,1,1,
-                                     2,2,2,2,2,2,2,2,2,2,2,2,
-                                     3,3,3,3,3,3,3,3,3,3,3,3,
-                                     4,4,4,4,4,4,4,4,4,4,4,4,
-                                     5,5,5,5,5,5,5,5,5,5,5,5,
-                                     6,6,6,6,6,6,6,6,6,6,6,6};
+     int level1[levelWidth * levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
+                                            0,0,0,0,0,0,0,2,2,2,2,2,
+                                            0,0,0,0,0,0,0,0,0,0,0,0,
+                                            0,0,0,0,0,0,0,0,0,0,0,0,
+                                            0,0,0,0,0,0,0,0,0,0,0,0,
+                                            0,0,0,0,0,0,0,0,0,0,0,0,
+                                            0,0,0,0,0,0,0,0,0,0,0,0};
 
-
+     int level2[levelWidth * levelHeight] ={1,1,1,1,1,0,0,0,0,0,0,0,
+                                            2,2,2,2,2,2,0,0,0,0,0,0,
+                                            3,3,3,3,3,3,3,0,0,0,0,0,
+                                            4,4,4,4,4,4,4,4,0,0,0,0,
+                                            5,5,5,5,5,5,5,5,5,0,0,0,
+                                            6,6,6,6,6,6,6,6,6,6,0,0,
+                                            1,7,1,7,1,7,1,7,1,7,1,7};
 
      int blockStateMap[levelWidth * levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
-                                  1,1,1,1,1,1,1,1,1,1,1,1,
-                                  1,1,1,1,1,1,1,1,1,1,1,1,
-                                  1,1,1,1,1,1,1,1,1,1,1,1,
-                                  1,1,1,1,1,1,1,1,1,1,1,1,
-                                  1,1,1,1,1,1,1,1,1,1,1,1,
-                                  1,1,1,1,1,1,1,1,1,1,1,1};
+                                                   1,1,1,1,1,1,1,1,1,1,1,1,
+                                                   1,1,1,1,1,1,1,1,1,1,1,1,
+                                                   1,1,1,1,1,1,1,1,1,1,1,1,
+                                                   1,1,1,1,1,1,1,1,1,1,1,1,
+                                                   1,1,1,1,1,1,1,1,1,1,1,1,
+                                                   1,1,1,1,1,1,1,1,1,1,1,1};
 
 
 };

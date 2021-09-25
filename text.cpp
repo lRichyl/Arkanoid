@@ -68,7 +68,6 @@
 // };
 
 Font::Font(char *path, float size){
-     const int texture_size = 512;
      texture.width = texture_size;
      texture.height  = texture_size;
      this->size = size;
@@ -91,24 +90,22 @@ Font::Font(char *path, float size){
      // glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
 
-void render_text(Renderer* renderer, Font *font, char *text, V2 position, float size){
+void render_text(Renderer* renderer, Font *font, char *text, V2 position, V3 color){
      // while (*text < 128) {
-     int texture_size = font->texture.width;
+     int texture_size = font->texture_size;
      int length = strlen(text);
      float x = position.x;
      float y = position.y;
      for(int i = 0; i < length; ++i){
           stbtt_aligned_quad q;
           stbtt_GetBakedQuad(font->characters_data, texture_size,texture_size, text[i]-32, &position.x,&position.y,&q,1);//1=opengl & d3d10+,0=d3d9
-          // float width = (q.s1 - q.s0) * texture_size;
-          // float height = (q.t1 - q.t0) * texture_size;
 
           Rect boundingBox = {q.x0, (position.y - q.y0) + position.y - font->size/1.5f  , (q.x1 - q.x0), (q.y1 - q.y0)};
 
           Rect clippingBox = {q.s0 * texture_size, q.t0 * texture_size, (q.s1 - q.s0) * texture_size, (q.t1 - q.t0) * texture_size};
-          render_quad(renderer, &boundingBox, &font->texture, &clippingBox, false, 255, V3 {1.0f,1.0f,1.0f}, true);
+          render_quad(renderer, &boundingBox, &font->texture, &clippingBox, false, 255, color, true);
      }
-     
+
 }
 
 // void Text::Render(Renderer *renderer, std::string text){

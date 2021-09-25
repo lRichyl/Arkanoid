@@ -12,10 +12,11 @@ struct Font{
      Font(char *path, float size);
      float size;
      Texture texture;
+     static constexpr int texture_size = 512;
      stbtt_bakedchar characters_data[96];
 };
 
-void render_text(Renderer* renderer, Font *font, char *text, V2 position, float size);
+void render_text(Renderer* renderer, Font *font, char *text, V2 position, V3 color = {1.0f, 1.0f, 1.0f});
 
 // struct Text{
 //      void SetGlyphs();

@@ -45,7 +45,7 @@ int main(){
      LARGE_INTEGER start_time = get_time_counter();
 
      Game game = Game(renderer, window);
-     bool showFPS = true;
+     // bool showFPS = true;
      // Texture font = make_texture("assets/fonts/font.png");
      // Text FPSText = Text(font, 12, V2{0,float(window->internalHeight)});
      glfwSetWindowSizeCallback(window->GLFWInstance,WindowResizeCallback);
@@ -53,15 +53,10 @@ int main(){
 
      while(!glfwWindowShouldClose(window->GLFWInstance)){
 
-          // if(dt > 0.017){
-          //      printf("%f", dt);
-          //      continue;
-          // }
+
           //This is done because when we select the window it stops the execution of
           //the program so the next time we get the current time and calculate dt
           //it will be so big that physics break.
-          //The correct way to do this would be to poll the events on another thread because
-          //windows doesn't get out of the message loop until you stop grabbing the window.
           if(dt > 0 && dt < 0.1){
                game.GameLoop(dt);
 
@@ -90,7 +85,7 @@ int main(){
           float realfps;
           // std::string fps_string;
           // char *c;
-          if(showFPS && sample_count == NUM_SAMPLES - 1){
+          if(game.showFPS && sample_count == NUM_SAMPLES - 1){
                float sum = 0;
                for(int i = 0; i < sample_count; i++){
                     sum += samples[i];
@@ -105,10 +100,10 @@ int main(){
 
           }
           std::string fps_string = "FPS: "  + std::to_string((int)realfps);
-          char *c = &fps_string[0];
-          render_text(renderer, &test, c, V2 {0 , 599}, 32);
+          char *c_string = &fps_string[0];
+          render_text(renderer, &test, c_string, V2 {0 , 599});
 
-          if(showFPS){
+          if(game.showFPS){
                samples[sample_count] = ms_per_frame;
                sample_count++;
           }
