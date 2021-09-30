@@ -19,6 +19,7 @@ struct RendererInfo{
 
 struct ShaderProgram{
      unsigned int id;
+     char *name;
 };
 struct Batch{
      unsigned int vbo;

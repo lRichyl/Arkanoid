@@ -1,7 +1,7 @@
 #include "entities.h"
 #include "input.h"
 #include "renderer.h"
-#include "game.h"
+// #include "game.h"
 
 void Paddle::Update(float dt, Renderer *renderer){
      float pendingMovement = 0;

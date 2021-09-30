@@ -202,7 +202,7 @@ void compile_shader_program(ShaderProgram *shader_program, char *vs_path, char *
      make_vertex_shader(vs_path, &vs);
      make_fragment_shader(fs_path, &fs);
      create_shader_program(shader_program, vs, fs);
-     printf("SHADER PROGRAM\n");
+     printf("SHADER PROGRAM %s\n", shader_program->name);
      printf("%s\n", vs_path);
      printf("%s\n", fs_path);
      printf("Succesfully compiled\n\n");
@@ -214,8 +214,12 @@ void initialize_renderer(Renderer *renderer, Window *window){
      renderer->drawing_resolution.x = window->internalWidth;
      renderer->drawing_resolution.y = window->internalHeight;
      renderer->current_batch = &renderer->batches[0];
+
+     renderer->default_shader_program.name = "Batch shader";
+     renderer->framebuffer_shader_program.name = "Framebuffer shader";
      compile_shader_program(&renderer->default_shader_program, "assets/shaders/default_vertex_shader.txt", "assets/shaders/default_fragment_shader.txt");
      compile_shader_program(&renderer->framebuffer_shader_program, "assets/shaders/framebuffer_vertex_shader.txt", "assets/shaders/framebuffer_fragment_shader.txt");
+
      create_framebuffer_buffers(renderer);
      initialize_framebuffer(renderer);
 

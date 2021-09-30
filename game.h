@@ -1,5 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
+#include "time.h"
 #include "renderer.h"
 #include "entities.h"
 #include "text.h"
@@ -32,6 +33,7 @@ struct Game{
      Window *window;
      Texture arkanoidTexture = make_texture("assets/textures/Arkanoid blocks.png");
      Font debugFont = Font("assets/fonts/Simvoni.ttf", 20);
+     Timer timer;
 // Texture tex;
      Rect blockClipRegions[Blocks::BLOCKS_COUNT] =
                                {Rect {0, 0, 0, 0},
@@ -53,17 +55,18 @@ struct Game{
 
      int *levelList[numberOfLevels];
      int *currentLevel;
+     int nextLevel = 1;
      int numberOfBlocksToWin = 0;
      Rect blocksBoundingBoxes[maxNumberOfBlocksBoundingBoxes];
      V2 levelOffset = {22, 30};
 
      int level1[levelWidth * levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
-                                            0,0,0,0,0,0,0,2,2,2,2,2,
-                                            0,0,0,0,0,0,0,0,0,0,0,0,
-                                            0,0,0,0,0,0,0,0,0,0,0,0,
-                                            0,0,0,0,0,0,0,0,0,0,0,0,
-                                            0,0,0,0,0,0,0,0,0,0,0,0,
-                                            0,0,0,0,0,0,0,0,0,0,0,0};
+                                            2,2,2,2,2,2,2,2,2,2,2,2,
+                                            3,3,3,3,3,3,3,3,3,3,3,3,
+                                            4,4,4,4,4,4,4,4,4,4,4,4,
+                                            5,5,5,5,5,5,5,5,5,5,5,5,
+                                            6,6,6,6,6,6,6,6,6,6,6,6,
+                                            7,7,7,7,7,7,7,7,7,7,7,7};
 
      int level2[levelWidth * levelHeight] ={1,1,1,1,1,0,0,0,0,0,0,0,
                                             2,2,2,2,2,2,0,0,0,0,0,0,

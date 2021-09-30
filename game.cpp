@@ -1,4 +1,4 @@
-#include "renderer.h"
+// #include "renderer.h"
 #include "game.h"
 #include "GLFW/glfw3.h"
 #include "entities.h"
@@ -6,6 +6,7 @@
 #include "collision.h"
 #include "input.h"
 #include "text.h"
+#include "utilities.h"
 #include "stb_truetype.h"
 
 Game::Game(Renderer *r, Window *w){
@@ -20,6 +21,7 @@ Game::Game(Renderer *r, Window *w){
      ball.Init(V2{0, 0}, arkanoidTexture);
      ball.ResetPosition(&paddle);
      showFPS = true;
+     timer.timeToWait = 2;
 }
 
 void Game::UpdateGame(float dt){
@@ -34,9 +36,22 @@ void Game::UpdateGame(float dt){
                break;
           }
           case GAME_PLAYING:{
+               timer.Tick();
+               if(timer.isTimeReached){
+                    printf("Time Reached \n");
+               }
+               if(isKeyPressed(renderer->window, GLFW_KEY_SPACE)){
+                    timer.Stop();
+               }
+               if(isKeyPressed(renderer->window, GLFW_KEY_P)){
+                    timer.Resume();
+               }
+               if(isKeyPressed(renderer->window, GLFW_KEY_Z)){
+                    timer.Pause();
+               }
                std::string blocksToWinString = std::to_string(numberOfBlocksToWin);
-               char *blocksToWinCString = &blocksToWinString[0];
-               render_text(renderer, &debugFont, blocksToWinCString, V2{400, 600});
+               // render_text(renderer, &debugFont, "HOLA MUNDO", V2{400, 300}, V3{1.0f,1.0f,1.0f}, true);
+               render_text(renderer, &debugFont, blocksToWinString.c_str(), V2{400, 600}, V3{1.0f,1.0f,1.0f}, true);
                paddle.Update(dt, renderer);
                ball.Update(dt, renderer, &paddle);
                MaybeLaunchBall();
@@ -45,8 +60,14 @@ void Game::UpdateGame(float dt){
                BallCollisionWithBlocks(dt);
                BallCollisionWithPaddle(dt);
                if(numberOfBlocksToWin == 0){
-                    currentLevel = levelList[1];
-                    state = GameState::GAME_LEVEL_LOADING;
+                    if(nextLevel < numberOfLevels){
+                         currentLevel = levelList[nextLevel];
+                         nextLevel++;
+                         assert(nextLevel < numberOfLevels);
+                         state = GameState::GAME_LEVEL_LOADING;
+                    }else{
+                         //All level were completed.
+                    }
                }
           }
                break;
@@ -55,15 +76,10 @@ void Game::UpdateGame(float dt){
 
 
 
-Rect p = {0,600,512,512};
 void Game::DrawGame(){
      paddle.Draw(renderer);
      ball.Draw(renderer);
      DrawCurrentLevel();
-
-     // render_quad_to_ui(renderer, &p, &test.texture, NULL, false, 50);
-     // render_text(renderer, &test, "Esta es una prueba de texto", V2 {0 , 600}, 32);
-
      renderer_draw(renderer);
      swap_buffers(window);
 }

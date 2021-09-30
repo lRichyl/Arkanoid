@@ -1,8 +1,8 @@
 
 #include <stdio.h>
 #include <windows.h>
+#include "time.h"
 #include "renderer.h"
-#include "timer.h"
 #include "game.h"
 #include "text.h"
 #include <cmath>
@@ -61,6 +61,7 @@ int main(){
                game.GameLoop(dt);
 
           }
+          Timer::dt = dt;
 
           LARGE_INTEGER end_time = get_time_counter();
           float ms_per_frame = get_time_in_ms(start_time, end_time, perf_count_frequency);
