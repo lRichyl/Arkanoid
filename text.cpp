@@ -1,6 +1,6 @@
 #include "text.h"
 #include "renderer.h"
-#include "string.h"
+// #include "string.h"
 
 
 Font::Font(char *path, float size){
@@ -26,10 +26,10 @@ Font::Font(char *path, float size){
      // glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
 
-void render_text(Renderer* renderer, Font *font, const char *text, V2 position, V3 color, bool center){
+void render_text(Renderer* renderer, Font *font, std::string *text, V2 position, V3 color, bool center){
      // while (*text < 128) {
      int texture_size = font->texture_size;
-     int length = strlen(text);
+     int length = text->length();
      V2 finalPosition = position;
      if(center){
           float textSize = length * font->size;
@@ -39,7 +39,7 @@ void render_text(Renderer* renderer, Font *font, const char *text, V2 position, 
      }
      for(int i = 0; i < length; ++i){
           stbtt_aligned_quad q;
-          stbtt_GetBakedQuad(font->characters_data, texture_size,texture_size, text[i]-32, &finalPosition.x,&finalPosition.y,&q,1);//1=opengl & d3d10+,0=d3d9
+          stbtt_GetBakedQuad(font->characters_data, texture_size,texture_size, (*text)[i]-32, &finalPosition.x,&finalPosition.y,&q,1);//1=opengl & d3d10+,0=d3d9
 
           Rect boundingBox = {q.x0, (finalPosition.y - q.y0) + finalPosition.y - font->size/1.5f  , (q.x1 - q.x0), (q.y1 - q.y0)};
 

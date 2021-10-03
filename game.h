@@ -1,13 +1,22 @@
 #ifndef GAME_H
 #define GAME_H
+
+#define DEV 1
 #include "time.h"
 #include "renderer.h"
 #include "entities.h"
 #include "text.h"
 #include "math.h"
+#include <string>
 #include <vector>
-#include <array>
 
+
+struct Level{
+     static const int levelWidth = 12;
+     static const int levelHeight = 7;
+     std::string name;
+     std::vector<int> layout;
+};
 enum GameState{
      GAME_LEVEL_LOADING,
      GAME_PLAYING
@@ -20,6 +29,8 @@ struct Game{
      Game(Renderer *r, Window *w);
 
      void DrawCurrentLevel();
+     void InitLevels();
+     void MaybeLoadNextLevel();
      void DrawBall();
      void CalculateNumberOfBlocksToWin();
      void GenerateBlocksBoundingBoxes();
@@ -27,6 +38,9 @@ struct Game{
      void BallCollisionWithBlocks(float dt);
      void BallCollisionWithPaddle(float dt);
      void MaybeLaunchBall();
+
+     //Only for development
+     void ClearLevel();
 
      GameState state = GameState::GAME_LEVEL_LOADING;
      Renderer *renderer;
@@ -47,36 +61,39 @@ struct Game{
      Paddle paddle;
      Ball ball;
      bool showFPS = false;
-     static const int levelWidth = 12;
-     static const int levelHeight = 7;
+     // static const int levelWidth = 12;
+     // static const int levelHeight = 7;
      static const int maxNumberOfBlocksBoundingBoxes = 100;
      static const int numberOfLevels = 5;
      static constexpr V2 blockSize = {63, 32};
 
-     int *levelList[numberOfLevels];
-     int *currentLevel;
+     Level *levelList[numberOfLevels];
+     Level *currentLevel;
      int nextLevel = 1;
      int numberOfBlocksToWin = 0;
+     std::string currentLevelString;
      Rect blocksBoundingBoxes[maxNumberOfBlocksBoundingBoxes];
      V2 levelOffset = {22, 30};
 
-     int level1[levelWidth * levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
-                                            2,2,2,2,2,2,2,2,2,2,2,2,
-                                            3,3,3,3,3,3,3,3,3,3,3,3,
-                                            4,4,4,4,4,4,4,4,4,4,4,4,
-                                            5,5,5,5,5,5,5,5,5,5,5,5,
-                                            6,6,6,6,6,6,6,6,6,6,6,6,
-                                            7,7,7,7,7,7,7,7,7,7,7,7};
+     Level level1;
+     Level level2;
+     // int level1[levelWidth * levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
+     //                                        2,2,2,2,2,2,2,2,2,2,2,2,
+     //                                        3,3,3,3,3,3,3,3,3,3,3,3,
+     //                                        4,4,4,4,4,4,4,4,4,4,4,4,
+     //                                        5,5,5,5,5,5,5,5,5,5,5,5,
+     //                                        6,6,6,6,6,6,6,6,6,6,6,6,
+     //                                        7,7,7,7,7,7,7,7,7,7,7,7};
 
-     int level2[levelWidth * levelHeight] ={1,1,1,1,1,0,0,0,0,0,0,0,
-                                            2,2,2,2,2,2,0,0,0,0,0,0,
-                                            3,3,3,3,3,3,3,0,0,0,0,0,
-                                            4,4,4,4,4,4,4,4,0,0,0,0,
-                                            5,5,5,5,5,5,5,5,5,0,0,0,
-                                            6,6,6,6,6,6,6,6,6,6,0,0,
-                                            1,7,1,7,1,7,1,7,1,7,1,7};
+     // int level2[levelWidth * levelHeight] ={1,1,1,1,1,0,0,0,0,0,0,0,
+     //                                        2,2,2,2,2,2,0,0,0,0,0,0,
+     //                                        3,3,3,3,3,3,3,0,0,0,0,0,
+     //                                        4,4,4,4,4,4,4,4,0,0,0,0,
+     //                                        5,5,5,5,5,5,5,5,5,0,0,0,
+     //                                        6,6,6,6,6,6,6,6,6,6,0,0,
+     //                                        1,7,1,7,1,7,1,7,1,7,1,7};
 
-     int blockStateMap[levelWidth * levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
+     int blockStateMap[Level::levelWidth * Level::levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
                                                    1,1,1,1,1,1,1,1,1,1,1,1,
                                                    1,1,1,1,1,1,1,1,1,1,1,1,
                                                    1,1,1,1,1,1,1,1,1,1,1,1,

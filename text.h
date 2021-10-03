@@ -16,7 +16,7 @@ struct Font{
      stbtt_bakedchar characters_data[96];
 };
 
-void render_text(Renderer* renderer, Font *font, const char *text, V2 position, V3 color = {1.0f, 1.0f, 1.0f}
+void render_text(Renderer* renderer, Font *font, std::string *text, V2 position, V3 color = {1.0f, 1.0f, 1.0f}
                , bool center = false);
 
 // struct Text{

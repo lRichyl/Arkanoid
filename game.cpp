@@ -12,8 +12,9 @@
 Game::Game(Renderer *r, Window *w){
      renderer = r;
      window = w;
-     levelList[0] = &level1[0];
-     levelList[1] = &level2[0];
+     InitLevels();
+     levelList[0] = &level1;
+     levelList[1] = &level2;
      currentLevel = levelList[0];
      assert(currentLevel);
 
@@ -24,6 +25,27 @@ Game::Game(Renderer *r, Window *w){
      timer.timeToWait = 2;
 }
 
+void Game::InitLevels(){
+     level1.name = "Level 1";
+     level2.name = "Level 2";
+
+     level1.layout = {1,1,1,1,1,1,1,1,1,1,1,1,
+                      2,2,2,2,2,2,2,2,2,2,2,2,
+                      3,3,3,3,3,3,3,3,3,3,3,3,
+                      4,4,4,4,4,4,4,4,4,4,4,4,
+                      5,5,5,5,5,5,5,5,5,5,5,5,
+                      6,6,6,6,6,6,6,6,6,6,6,6,
+                      7,7,7,7,7,7,7,7,7,7,7,7};
+     level2.layout = {1,1,1,1,1,0,0,0,0,0,0,0,
+                      2,2,2,2,2,2,0,0,0,0,0,0,
+                      3,3,3,3,3,3,3,0,0,0,0,0,
+                      4,4,4,4,4,4,4,4,0,0,0,0,
+                      5,5,5,5,5,5,5,5,5,0,0,0,
+                      6,6,6,6,6,6,6,6,6,6,0,0,
+                      1,7,1,7,1,7,1,7,1,7,1,7};
+
+}
+
 void Game::UpdateGame(float dt){
      //When we load a new level the numberOfBlocksToWin and the blocksBoundingBoxes must be
      //recalculated.
@@ -32,6 +54,7 @@ void Game::UpdateGame(float dt){
                CalculateNumberOfBlocksToWin(); //This should be calculated once at the start of every level
                GenerateBlocksBoundingBoxes();
                ResetBlocksState();
+               // currentLevelString = "Level " + std::to_string(nextLevel);
                state = GameState::GAME_PLAYING;
                break;
           }
@@ -40,18 +63,10 @@ void Game::UpdateGame(float dt){
                if(timer.isTimeReached){
                     printf("Time Reached \n");
                }
-               if(isKeyPressed(renderer->window, GLFW_KEY_SPACE)){
-                    timer.Stop();
-               }
-               if(isKeyPressed(renderer->window, GLFW_KEY_P)){
-                    timer.Resume();
-               }
-               if(isKeyPressed(renderer->window, GLFW_KEY_Z)){
-                    timer.Pause();
-               }
+
                std::string blocksToWinString = std::to_string(numberOfBlocksToWin);
-               // render_text(renderer, &debugFont, "HOLA MUNDO", V2{400, 300}, V3{1.0f,1.0f,1.0f}, true);
-               render_text(renderer, &debugFont, blocksToWinString.c_str(), V2{400, 600}, V3{1.0f,1.0f,1.0f}, true);
+               render_text(renderer, &debugFont, &currentLevel->name, V2{400, 300}, V3{1.0f,1.0f,1.0f}, true);
+               render_text(renderer, &debugFont, &blocksToWinString, V2{400, 600}, V3{1.0f,1.0f,1.0f}, true);
                paddle.Update(dt, renderer);
                ball.Update(dt, renderer, &paddle);
                MaybeLaunchBall();
@@ -69,10 +84,12 @@ void Game::UpdateGame(float dt){
                          //All level were completed.
                     }
                }
-          }
+
+
                break;
           }
      }
+}
 
 
 
@@ -103,12 +120,12 @@ void Game::MaybeLaunchBall(){
 
 //Generate this every time a new level is loaded.
 void Game::GenerateBlocksBoundingBoxes(){
-     assert((levelHeight * levelWidth) <= maxNumberOfBlocksBoundingBoxes);
-     for(int y = 0; y < levelHeight; y++){
-          for(int x = 0; x < levelWidth; x++){
-               int index = (levelWidth * y) + x;
+     assert((Level::levelHeight * Level::levelWidth) <= maxNumberOfBlocksBoundingBoxes);
+     for(int y = 0; y < Level::levelHeight; y++){
+          for(int x = 0; x < Level::levelWidth; x++){
+               int index = (Level::levelWidth * y) + x;
                // printf("%d\n", currentLevel[index]);
-               if(currentLevel[index] != Blocks::BLOCKS_EMPTY){
+               if(currentLevel->layout[index] != Blocks::BLOCKS_EMPTY){
                     Rect boundingBox = {levelOffset.x + x * blockSize.x, window->internalHeight - levelOffset.y - y * blockSize.y, blockSize.x, blockSize.y};
                     blocksBoundingBoxes[index] = boundingBox;
                }else{
@@ -119,11 +136,11 @@ void Game::GenerateBlocksBoundingBoxes(){
 }
 
 void Game::ResetBlocksState(){
-     for(int y = 0; y < levelHeight; y++){
-          for(int x = 0; x < levelWidth; x++){
-               int index = (levelWidth * y) + x;
+     for(int y = 0; y < Level::levelHeight; y++){
+          for(int x = 0; x < Level::levelWidth; x++){
+               int index = (Level::levelWidth * y) + x;
                // printf("%d\n", currentLevel[index]);
-               if(currentLevel[index] != Blocks::BLOCKS_EMPTY){
+               if(currentLevel->layout[index] != Blocks::BLOCKS_EMPTY){
                     blockStateMap[index] = 1;
                }else{
                     blockStateMap[index] = 0;
@@ -132,11 +149,20 @@ void Game::ResetBlocksState(){
      }
 }
 
+void Game::ClearLevel(){
+     //This should be done only once when the key is pressed. Right now we detect
+     //it every frame so it causes the currentLevel to go out of bounds.
+     //We should use the glfw callback to detect it once.
+     numberOfBlocksToWin = 0;
+     state = GameState::GAME_LEVEL_LOADING;
+
+}
+
 void Game::DrawCurrentLevel(){
-     for(int y = 0; y < levelHeight; y++){
-          for(int x = 0; x < levelWidth; x++){
-               int index = (levelWidth * y) + x;
-               int clipRegion = currentLevel[index];
+     for(int y = 0; y < Level::levelHeight; y++){
+          for(int x = 0; x < Level::levelWidth; x++){
+               int index = (Level::levelWidth * y) + x;
+               int clipRegion = currentLevel->layout[index];
                if(blockStateMap[index] > 0){
                     render_quad(renderer, &blocksBoundingBoxes[index], &arkanoidTexture, &blockClipRegions[clipRegion]);
                }
@@ -146,10 +172,10 @@ void Game::DrawCurrentLevel(){
 
 //Remember to do this calculation every time you change levels
 void Game::CalculateNumberOfBlocksToWin(){
-     for(int y = 0; y < levelHeight; y++){
-          for(int x = 0; x < levelWidth; x++){
-               int index = (levelWidth * y) + x;
-               if(currentLevel[index] != Blocks::BLOCKS_BLACK && currentLevel[index] != Blocks::BLOCKS_EMPTY){
+     for(int y = 0; y < Level::levelHeight; y++){
+          for(int x = 0; x < Level::levelWidth; x++){
+               int index = (Level::levelWidth * y) + x;
+               if(currentLevel->layout[index] != Blocks::BLOCKS_BLACK && currentLevel->layout[index] != Blocks::BLOCKS_EMPTY){
                     numberOfBlocksToWin++;
                }
           }
@@ -158,13 +184,13 @@ void Game::CalculateNumberOfBlocksToWin(){
 
 void Game::BallCollisionWithBlocks(float dt){
      V2 penetration;
-     for(int y = 0; y < levelHeight; y++){
-          for(int x = 0; x < levelWidth; x++){
-               int index = (levelWidth * y) + x;
+     for(int y = 0; y < Level::levelHeight; y++){
+          for(int x = 0; x < Level::levelWidth; x++){
+               int index = (Level::levelWidth * y) + x;
                if(blockStateMap[index]){
                     if(DoRectsCollide(ball.boundingBox, blocksBoundingBoxes[index], &penetration)){
                          //Black blocks are indestructible.
-                         if(currentLevel[index] != Blocks::BLOCKS_BLACK){
+                         if(currentLevel->layout[index] != Blocks::BLOCKS_BLACK){
                               blockStateMap[index] = 0;
                               numberOfBlocksToWin--;
                          }
