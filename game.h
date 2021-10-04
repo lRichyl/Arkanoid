@@ -29,6 +29,7 @@ struct Game{
      Game(Renderer *r, Window *w);
 
      void DrawCurrentLevel();
+     void DoEvents();
      void InitLevels();
      void MaybeLoadNextLevel();
      void DrawBall();

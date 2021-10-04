@@ -5,6 +5,7 @@
 #include "renderer.h"
 #include "game.h"
 #include "text.h"
+#include "input.h"
 #include <cmath>
 #include <string>
 
@@ -49,6 +50,7 @@ int main(){
      // Texture font = make_texture("assets/fonts/font.png");
      // Text FPSText = Text(font, 12, V2{0,float(window->internalHeight)});
      glfwSetWindowSizeCallback(window->GLFWInstance,WindowResizeCallback);
+     SetKeyboardCallback(window);
      Font test = Font("assets/fonts/Simvoni.ttf", 20);
 
      while(!glfwWindowShouldClose(window->GLFWInstance)){

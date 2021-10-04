@@ -5,14 +5,14 @@
 
 void Paddle::Update(float dt, Renderer *renderer){
      float pendingMovement = 0;
-     if(isKeyPressed(renderer->window, GLFW_KEY_D)){
+     if(IsKeyPressed(renderer->window, GLFW_KEY_D)){
           direction.x = 1;
      }
-     if(isKeyPressed(renderer->window, GLFW_KEY_A)){
+     if(IsKeyPressed(renderer->window, GLFW_KEY_A)){
           direction.x = -1;
      }
-     if(!isKeyPressed(renderer->window, GLFW_KEY_D) && !isKeyPressed(renderer->window, GLFW_KEY_A)
-          || isKeyPressed(renderer->window, GLFW_KEY_D) && isKeyPressed(renderer->window, GLFW_KEY_A)){
+     if(!IsKeyPressed(renderer->window, GLFW_KEY_D) && !IsKeyPressed(renderer->window, GLFW_KEY_A)
+          || IsKeyPressed(renderer->window, GLFW_KEY_D) && IsKeyPressed(renderer->window, GLFW_KEY_A)){
           direction.x = 0;
      }
      pendingMovement += speed * dt * direction.x;

@@ -1,4 +1,4 @@
 TODO
 
-- Transition between levels. Show name of the level plus "Completed" and wait a couple of seconds to
+- Transition between levels. Show name of the level followed by "Completed" and wait a couple of seconds to
  load the next level. Don't forget to reset the ball to the paddle.

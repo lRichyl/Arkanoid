@@ -4,6 +4,14 @@
 #include "GLFW/glfw3.h"
 #include "window.h"
 
-bool isKeyPressed(Window *window, int key);
+struct Event{
+     int key;
+     int action;
+};
+bool IsKeyPressed(Window *window, int key);
+void PollKeyboardEvents();
+void SetKeyboardCallback(Window *window);
+void PrintEvents();
+bool GetNextEvent(Event *event);
 
 #endif

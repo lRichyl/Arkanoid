@@ -59,6 +59,9 @@ void Game::UpdateGame(float dt){
                break;
           }
           case GAME_PLAYING:{
+               // PrintEvents();
+               DoEvents();
+
                timer.Tick();
                if(timer.isTimeReached){
                     printf("Time Reached \n");
@@ -107,10 +110,22 @@ void Game::GameLoop(float dt){
      poll_events();
 }
 
+void Game::DoEvents(){
+     Event e;
+     while(GetNextEvent(&e)){
+          #if DEV
+               if(e.key == GLFW_KEY_C && e.action == GLFW_PRESS){
+                    // printf("SUCCESS\n");
+                    ClearLevel();
+               }
+          #endif    
+     }
+}
+
 
 void Game::MaybeLaunchBall(){
      if(!ball.state == BallState::ON_PADDLE) return;
-     if(isKeyPressed(window, GLFW_KEY_SPACE)){
+     if(IsKeyPressed(window, GLFW_KEY_SPACE)){
           float xVelocity = ball.speed / 2 * paddle.direction.x;
           ball.velocity.y = ball.speed;
           ball.velocity.x = xVelocity;
@@ -154,7 +169,7 @@ void Game::ClearLevel(){
      //it every frame so it causes the currentLevel to go out of bounds.
      //We should use the glfw callback to detect it once.
      numberOfBlocksToWin = 0;
-     state = GameState::GAME_LEVEL_LOADING;
+     // state = GameState::GAME_LEVEL_LOADING;
 
 }
 
