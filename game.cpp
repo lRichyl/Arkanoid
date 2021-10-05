@@ -13,9 +13,9 @@ Game::Game(Renderer *r, Window *w){
      renderer = r;
      window = w;
      InitLevels();
-     levelList[0] = &level1;
-     levelList[1] = &level2;
-     currentLevel = levelList[0];
+     // levelList[0] = &level1;
+     // levelList[1] = &level2;
+     currentLevel = &levelList[0];
      assert(currentLevel);
 
      paddle.Init(V2{384, 16}, arkanoidTexture);
@@ -44,31 +44,24 @@ void Game::InitLevels(){
                       6,6,6,6,6,6,6,6,6,6,0,0,
                       1,7,1,7,1,7,1,7,1,7,1,7};
 
+     levelList.push_back(level1);
+     levelList.push_back(level2);
+
 }
 
 void Game::UpdateGame(float dt){
-     //When we load a new level the numberOfBlocksToWin and the blocksBoundingBoxes must be
-     //recalculated.
      switch(state){
           case GAME_LEVEL_LOADING:{
                CalculateNumberOfBlocksToWin(); //This should be calculated once at the start of every level
                GenerateBlocksBoundingBoxes();
                ResetBlocksState();
-               // currentLevelString = "Level " + std::to_string(nextLevel);
                state = GameState::GAME_PLAYING;
                break;
           }
           case GAME_PLAYING:{
-               // PrintEvents();
                DoEvents();
 
-               timer.Tick();
-               if(timer.isTimeReached){
-                    printf("Time Reached \n");
-               }
-
                std::string blocksToWinString = std::to_string(numberOfBlocksToWin);
-               render_text(renderer, &debugFont, &currentLevel->name, V2{400, 300}, V3{1.0f,1.0f,1.0f}, true);
                render_text(renderer, &debugFont, &blocksToWinString, V2{400, 600}, V3{1.0f,1.0f,1.0f}, true);
                paddle.Update(dt, renderer);
                ball.Update(dt, renderer, &paddle);
@@ -78,17 +71,30 @@ void Game::UpdateGame(float dt){
                BallCollisionWithBlocks(dt);
                BallCollisionWithPaddle(dt);
                if(numberOfBlocksToWin == 0){
-                    if(nextLevel < numberOfLevels){
-                         currentLevel = levelList[nextLevel];
-                         nextLevel++;
-                         assert(nextLevel < numberOfLevels);
-                         state = GameState::GAME_LEVEL_LOADING;
+                    if(nextLevel < levelList.size()){
+                         // nextLevel++;
+                         // currentLevel = &levelList[nextLevel];
+                         state = GameState::GAME_LEVEL_TRANSITION;
                     }else{
                          //All level were completed.
                     }
                }
 
 
+               break;
+          }
+          case GAME_LEVEL_TRANSITION:{
+               static std::string completedString = "COMPLETED";
+               timer.Tick();
+               if(timer.isTimeReached){
+                    nextLevel++;
+                    currentLevel = &levelList[nextLevel];
+                    state = GameState::GAME_LEVEL_LOADING;
+               }else{
+                    render_text(renderer, &debugFont, &currentLevel->name, V2{400, 300}, V3{1.0f,1.0f,1.0f}, true);
+                    render_text(renderer, &debugFont, &completedString, V2{400, 270}, V3{1.0f,1.0f,1.0f}, true);
+
+               }
                break;
           }
      }
@@ -118,7 +124,7 @@ void Game::DoEvents(){
                     // printf("SUCCESS\n");
                     ClearLevel();
                }
-          #endif    
+          #endif
      }
 }
 
@@ -168,7 +174,11 @@ void Game::ClearLevel(){
      //This should be done only once when the key is pressed. Right now we detect
      //it every frame so it causes the currentLevel to go out of bounds.
      //We should use the glfw callback to detect it once.
-     numberOfBlocksToWin = 0;
+     if(nextLevel < levelList.size() - 1){
+          numberOfBlocksToWin = 0;
+     }else{
+          printf("There's no more levels\n");
+     }
      // state = GameState::GAME_LEVEL_LOADING;
 
 }

@@ -29,6 +29,7 @@ void PollKeyboardEvents(GLFWwindow* window, int key, int scancode, int action, i
      events.push(e);
 }
 
+//TODO: Set here the different callbacks to glfw and change the name of the function.
 void SetKeyboardCallback(Window *window){
      glfwSetKeyCallback(window->GLFWInstance, PollKeyboardEvents);
 }

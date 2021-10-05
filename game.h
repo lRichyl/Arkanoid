@@ -12,14 +12,19 @@
 
 
 struct Level{
+     Level(){
+          // background = make_texture();
+     }
      static const int levelWidth = 12;
      static const int levelHeight = 7;
      std::string name;
      std::vector<int> layout;
+     Texture background;
 };
 enum GameState{
      GAME_LEVEL_LOADING,
-     GAME_PLAYING
+     GAME_PLAYING,
+     GAME_LEVEL_TRANSITION
 };
 
 struct Game{
@@ -68,9 +73,10 @@ struct Game{
      static const int numberOfLevels = 5;
      static constexpr V2 blockSize = {63, 32};
 
-     Level *levelList[numberOfLevels];
+     // Level *levelList[numberOfLevels];
+     std::vector<Level> levelList;
      Level *currentLevel;
-     int nextLevel = 1;
+     int nextLevel = 0;
      int numberOfBlocksToWin = 0;
      std::string currentLevelString;
      Rect blocksBoundingBoxes[maxNumberOfBlocksBoundingBoxes];

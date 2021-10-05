@@ -103,8 +103,8 @@ int main(){
 
           }
           std::string fps_string = "FPS: "  + std::to_string((int)realfps);
-          char *c_string = &fps_string[0];
-          // render_text(renderer, &test, c_string, V2 {0 , 599});
+          // char *c_string = &fps_string[0];
+          render_text(renderer, &test, &fps_string, V2 {0 , 599});
 
           if(game.showFPS){
                samples[sample_count] = ms_per_frame;

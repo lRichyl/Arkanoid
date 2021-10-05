@@ -1,4 +1,6 @@
 TODO
 
-- Transition between levels. Show name of the level followed by "Completed" and wait a couple of seconds to
- load the next level. Don't forget to reset the ball to the paddle.
+- Add more levels (total of 5).
+- Add a background to the levels.
+- Implement sound using OpenAl.
+- Make a timed text on the screen using a queue.
