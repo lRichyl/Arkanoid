@@ -28,6 +28,10 @@ void Paddle::Update(float dt, Renderer *renderer){
      }
 }
 
+void Paddle::ResetPosition(Window *window){
+     boundingBox.x = window->internalWidth/2.0f - boundingBox.w/2.0f;
+}
+
 void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
      switch(state){
           case ON_PADDLE:{
@@ -72,6 +76,7 @@ void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
 }
 
 void Ball::ResetPosition(Paddle *paddle){
+     state = BallState::ON_PADDLE;
      float x = paddle->boundingBox.x + paddle->boundingBox.w/2 - boundingBox.w/2;
      float y = paddle->boundingBox.y + boundingBox.h;
      boundingBox.x = x;

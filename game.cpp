@@ -87,6 +87,8 @@ void Game::UpdateGame(float dt){
                CalculateNumberOfBlocksToWin(); //This should be calculated once at the start of every level
                GenerateBlocksBoundingBoxes();
                ResetBlocksState();
+               paddle.ResetPosition(window);
+               ball.ResetPosition(&paddle);
                state = GameState::GAME_PLAYING;
                break;
           }

@@ -50,6 +50,7 @@ struct Paddle : public Entity{
      }
 
      void Update(float dt, Renderer *renderer);
+     void ResetPosition(Window *window);
      // void Draw(Renderer *renderer);
 
      V2 direction = {};
