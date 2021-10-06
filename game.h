@@ -82,8 +82,7 @@ struct Game{
      Rect blocksBoundingBoxes[maxNumberOfBlocksBoundingBoxes];
      V2 levelOffset = {22, 30};
 
-     Level level1;
-     Level level2;
+     
      // int level1[levelWidth * levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
      //                                        2,2,2,2,2,2,2,2,2,2,2,2,
      //                                        3,3,3,3,3,3,3,3,3,3,3,3,
