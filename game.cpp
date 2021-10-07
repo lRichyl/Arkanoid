@@ -18,7 +18,7 @@ Game::Game(Renderer *r, Window *w){
      currentLevel = &levelList[0];
      assert(currentLevel);
 
-     paddle.Init(V2{384, 16}, arkanoidTexture);
+     paddle.Init(V2{384, 16}, arkanoidTexture, renderer);
      ball.Init(V2{0, 0}, arkanoidTexture);
      ball.ResetPosition(&paddle);
      showFPS = true;
@@ -27,18 +27,11 @@ Game::Game(Renderer *r, Window *w){
 }
 
 void Game::InitLevels(){
-     Level level1 = Level("Level 1", "assets/textures/Level 1 Background.png");
-     Level level2 = Level("Level 2", "assets/textures/Level 1 Background.png");
-     Level level3 = Level("Level 3", "assets/textures/Level 1 Background.png");
-     Level level4 = Level("Level 4", "assets/textures/Level 1 Background.png");
-     Level level5 = Level("Level 5", "assets/textures/Level 1 Background.png");
-     // level1.name = "Level 1";
-     // level2.name = "Level 2";
-     // level3.name = "Level 3";
-     // level4.name = "Level 4";
-     // level5.name = "Level 5";
-
-     // level1.background = make_texture("assets/textures/Level 1 Background.png");
+     Level level1 = Level("Level 1", "assets/textures/Level 1 Background.png", {1.0f,0.1f,0.1f});
+     Level level2 = Level("Level 2", "assets/textures/Level 1 Background.png", {0.1f,1.0f,0.1f});
+     Level level3 = Level("Level 3", "assets/textures/Level 1 Background.png", {0.1f,0.1f,1.0f});
+     Level level4 = Level("Level 4", "assets/textures/Level 1 Background.png", {1.0f,0.2f,1.0f});
+     Level level5 = Level("Level 5", "assets/textures/Level 1 Background.png", {0.8f,0.8f,0.1f});
 
      level1.layout = {1,1,1,1,1,1,1,1,1,1,1,1,
                       2,2,2,2,2,2,2,2,2,2,2,2,
@@ -86,7 +79,7 @@ void Game::InitLevels(){
 
 static Rect backgroundPos = {0.0f, 60.f, 60.f, 60.f};
 void Level::DrawBackground(Renderer *renderer){
-     render_quad(renderer,NULL, &background);
+     render_quad(renderer,NULL, &background, NULL, false, 255, backgroundTint);
 }
 
 void Game::UpdateGame(float dt){
@@ -144,18 +137,19 @@ void Game::UpdateGame(float dt){
 
 
 
-void Game::DrawGame(float dt){
+void Game::DrawGame(float dt, float fps){
      currentLevel->DrawBackground(renderer);
      DrawCurrentLevel();
      std::string blocksToWinString = std::to_string(numberOfBlocksToWin);
      render_text(renderer, &debugFont, &blocksToWinString, V2{400, 600}, V3{1.0f,1.0f,1.0f}, true);
      FPSTimer.Tick();
-     static std::string fps;
-     if(showFPS && FPSTimer.isTimeReached){
-          fps = std::to_string(dt);
-     }
+     static std::string fpsString;
+     // if(showFPS && FPSTimer.isTimeReached){
+     int fpsInt = (int)fps;
+     fpsString = std::to_string(fpsInt);
+     // }
      if(showFPS){
-          render_text(renderer, &FPSFont, &fps, V2{0, (float)window->internalHeight}, V3{0.0f,1.0f,0.0f}, true);
+          render_text(renderer, &FPSFont, &fpsString, V2{0, (float)window->internalHeight}, V3{0.0f,1.0f,0.0f});
      }
 
      if(state == GameState::GAME_LEVEL_TRANSITION && !timer.isTimeReached){
@@ -165,16 +159,16 @@ void Game::DrawGame(float dt){
      }
 
 
-     paddle.Draw(renderer);
      ball.Draw(renderer);
+     paddle.Draw(renderer);
 
      renderer_draw(renderer);
      swap_buffers(window);
 }
 
-void Game::GameLoop(float dt){
+void Game::GameLoop(float dt, float fps){
      UpdateGame(dt);
-     DrawGame(dt);
+     DrawGame(dt, fps);
      poll_events();
 }
 

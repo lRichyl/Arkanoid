@@ -1,6 +1,6 @@
 TODO
 
-- Add a background to the levels.
+
 - Add power-ups
 - Implement sound using OpenAl.
 - Make a timed text on the screen using a queue.

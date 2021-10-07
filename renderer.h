@@ -62,6 +62,7 @@ struct Renderer{
      Batch ui_batch;
      Batch *current_batch;
      ShaderProgram default_shader_program;
+     ShaderProgram current_shader;
 };
 
 
@@ -82,8 +83,12 @@ struct Rect{
 };
 
 Renderer* create_renderer(Window *window);
+void compile_shader_program(ShaderProgram *shader_program, char *vs_path, char *fs_path);
+void initialize_texture_sampler(ShaderProgram shader);
+void load_mvp_to_shader(Renderer *renderer, ShaderProgram shader);
 void render_quad(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alpha_value = 255, V3 color = {1.0f,1.0f,1.0f}, bool mirrorY = false);
 void render_quad_to_ui(Renderer *renderer, Rect *position, Texture *texture, Rect *clip_region = NULL, bool mirror = false, float alpha_value = 255, V3 color = {1.0f,1.0f,1.0f}, bool mirrorY = false);
+void render_quad_with_shader(Renderer *renderer, Rect *position, Texture *texture, ShaderProgram shader,Rect *clip_region = NULL , bool mirrorX = false, float alpha_value = 255, V3 color = {1.0f,1.0f,1.0f}, bool mirrorY = false);
 void change_drawing_resolution(Renderer *renderer, int width, int height);
 Texture make_texture(const char *path);
 void renderer_draw(Renderer *renderer);

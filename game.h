@@ -12,10 +12,11 @@
 
 
 struct Level{
-     Level(std::string name, char *path){
+     Level(std::string name, char *path, V3 tint){
           this->name = name;
           if(path)
                background = make_texture(path);
+          backgroundTint = tint;
      }
      void DrawBackground(Renderer* renderer);
 
@@ -24,6 +25,7 @@ struct Level{
      std::string name;
      std::vector<int> layout;
      Texture background;
+     V3 backgroundTint = {1.0f,1.0f,1.0f};
 };
 enum GameState{
      GAME_LEVEL_LOADING,
@@ -33,8 +35,8 @@ enum GameState{
 
 struct Game{
      void UpdateGame(float dt);
-     void DrawGame(float dt);
-     void GameLoop(float dt);
+     void DrawGame(float dt, float fps);
+     void GameLoop(float dt, float fps);
      Game(Renderer *r, Window *w);
 
      void DrawCurrentLevel();

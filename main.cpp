@@ -59,8 +59,9 @@ int main(){
           //This is done because when we select the window it stops the execution of
           //the program so the next time we get the current time and calculate dt
           //it will be so big that physics break.
+          float realfps;
           if(dt > 0 && dt < 0.1){
-               game.GameLoop(dt);
+               game.GameLoop(dt, realfps);
           }
           Timer::dt = dt;
 
@@ -84,7 +85,7 @@ int main(){
           }
           dt = ms_per_frame / 1000.0f;
           int fps = round(1.0f/((waited_time + ms_per_frame)/1000.0f));
-          float realfps;
+
           // std::string fps_string;
           // char *c;
           if(game.showFPS && sample_count == NUM_SAMPLES - 1){
@@ -105,7 +106,7 @@ int main(){
           // char *c_string = &fps_string[0];
           // render_text(renderer, &test, &fps_string, V2 {0 , 599});
           if(game.showFPS){
-               printf("%f\n", realfps);
+               // printf("%f\n", realfps);
                samples[sample_count] = ms_per_frame;
                sample_count++;
           }

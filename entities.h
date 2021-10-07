@@ -43,18 +43,27 @@ struct Entity{
 //      Texture texture;
 // };
 struct Paddle : public Entity{
-     void Init(V2 position, Texture t){
+     void Init(V2 position, Texture t, Renderer *renderer){
           boundingBox = {position.x, position.y, 64, 16};
           clippingBox = {0 , 0, 32 , 8};
           texture = t;
+
+          shader.name = "Player Shader";
+          compile_shader_program(&shader, "assets/shaders/player_vertex_shader.txt", "assets/shaders/player_fragment_shader.txt");
+          initialize_texture_sampler(shader);
+          load_mvp_to_shader(renderer, shader);
      }
 
      void Update(float dt, Renderer *renderer);
+     // void Draw(Renderer *renderer){
+     //      render_quad(renderer, &boundingBox, &texture, &clippingBox);
+     // }
      void ResetPosition(Window *window);
      // void Draw(Renderer *renderer);
 
      V2 direction = {};
      float speed = 300;
+     ShaderProgram shader;
      // Texture texture;
 };
 
