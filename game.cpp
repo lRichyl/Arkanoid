@@ -23,19 +23,22 @@ Game::Game(Renderer *r, Window *w){
      ball.ResetPosition(&paddle);
      showFPS = true;
      timer.timeToWait = 2;
+     FPSTimer.timeToWait = 0.5;
 }
 
 void Game::InitLevels(){
-     Level level1;
-     Level level2;
-     Level level3;
-     Level level4;
-     Level level5;
-     level1.name = "Level 1";
-     level2.name = "Level 2";
-     level3.name = "Level 3";
-     level4.name = "Level 4";
-     level5.name = "Level 5";
+     Level level1 = Level("Level 1", "assets/textures/Level 1 Background.png");
+     Level level2 = Level("Level 2", "assets/textures/Level 1 Background.png");
+     Level level3 = Level("Level 3", "assets/textures/Level 1 Background.png");
+     Level level4 = Level("Level 4", "assets/textures/Level 1 Background.png");
+     Level level5 = Level("Level 5", "assets/textures/Level 1 Background.png");
+     // level1.name = "Level 1";
+     // level2.name = "Level 2";
+     // level3.name = "Level 3";
+     // level4.name = "Level 4";
+     // level5.name = "Level 5";
+
+     // level1.background = make_texture("assets/textures/Level 1 Background.png");
 
      level1.layout = {1,1,1,1,1,1,1,1,1,1,1,1,
                       2,2,2,2,2,2,2,2,2,2,2,2,
@@ -81,6 +84,11 @@ void Game::InitLevels(){
 
 }
 
+static Rect backgroundPos = {0.0f, 60.f, 60.f, 60.f};
+void Level::DrawBackground(Renderer *renderer){
+     render_quad(renderer,NULL, &background);
+}
+
 void Game::UpdateGame(float dt){
      switch(state){
           case GAME_LEVEL_LOADING:{
@@ -95,8 +103,8 @@ void Game::UpdateGame(float dt){
           case GAME_PLAYING:{
                DoEvents();
 
-               std::string blocksToWinString = std::to_string(numberOfBlocksToWin);
-               render_text(renderer, &debugFont, &blocksToWinString, V2{400, 600}, V3{1.0f,1.0f,1.0f}, true);
+
+
                paddle.Update(dt, renderer);
                ball.Update(dt, renderer, &paddle);
                MaybeLaunchBall();
@@ -118,15 +126,15 @@ void Game::UpdateGame(float dt){
                break;
           }
           case GAME_LEVEL_TRANSITION:{
-               static std::string completedString = "COMPLETED";
+               // static std::string completedString = "COMPLETED";
                timer.Tick();
                if(timer.isTimeReached){
                     nextLevel++;
                     currentLevel = &levelList[nextLevel];
                     state = GameState::GAME_LEVEL_LOADING;
                }else{
-                    render_text(renderer, &debugFont, &currentLevel->name, V2{400, 300}, V3{1.0f,1.0f,1.0f}, true);
-                    render_text(renderer, &debugFont, &completedString, V2{400, 270}, V3{1.0f,1.0f,1.0f}, true);
+                    // render_text(renderer, &debugFont, &currentLevel->name, V2{400, 300}, V3{1.0f,1.0f,1.0f}, true);
+                    // render_text(renderer, &debugFont, &completedString, V2{400, 270}, V3{1.0f,1.0f,1.0f}, true);
 
                }
                break;
@@ -136,17 +144,37 @@ void Game::UpdateGame(float dt){
 
 
 
-void Game::DrawGame(){
+void Game::DrawGame(float dt){
+     currentLevel->DrawBackground(renderer);
+     DrawCurrentLevel();
+     std::string blocksToWinString = std::to_string(numberOfBlocksToWin);
+     render_text(renderer, &debugFont, &blocksToWinString, V2{400, 600}, V3{1.0f,1.0f,1.0f}, true);
+     FPSTimer.Tick();
+     static std::string fps;
+     if(showFPS && FPSTimer.isTimeReached){
+          fps = std::to_string(dt);
+     }
+     if(showFPS){
+          render_text(renderer, &FPSFont, &fps, V2{0, (float)window->internalHeight}, V3{0.0f,1.0f,0.0f}, true);
+     }
+
+     if(state == GameState::GAME_LEVEL_TRANSITION && !timer.isTimeReached){
+          static std::string completedString = "COMPLETED";
+          render_text(renderer, &debugFont, &currentLevel->name, V2{400, 300}, V3{1.0f,1.0f,1.0f}, true);
+          render_text(renderer, &debugFont, &completedString, V2{400, 270}, V3{1.0f,1.0f,1.0f}, true);
+     }
+
+
      paddle.Draw(renderer);
      ball.Draw(renderer);
-     DrawCurrentLevel();
+
      renderer_draw(renderer);
      swap_buffers(window);
 }
 
 void Game::GameLoop(float dt){
      UpdateGame(dt);
-     DrawGame();
+     DrawGame(dt);
      poll_events();
 }
 

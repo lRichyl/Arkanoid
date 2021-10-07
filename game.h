@@ -12,9 +12,13 @@
 
 
 struct Level{
-     Level(){
-          // background = make_texture();
+     Level(std::string name, char *path){
+          this->name = name;
+          if(path)
+               background = make_texture(path);
      }
+     void DrawBackground(Renderer* renderer);
+
      static const int levelWidth = 12;
      static const int levelHeight = 7;
      std::string name;
@@ -29,7 +33,7 @@ enum GameState{
 
 struct Game{
      void UpdateGame(float dt);
-     void DrawGame();
+     void DrawGame(float dt);
      void GameLoop(float dt);
      Game(Renderer *r, Window *w);
 
@@ -53,7 +57,9 @@ struct Game{
      Window *window;
      Texture arkanoidTexture = make_texture("assets/textures/Arkanoid blocks.png");
      Font debugFont = Font("assets/fonts/Simvoni.ttf", 20);
+     Font FPSFont = Font("assets/fonts/Simvoni.ttf", 32);
      Timer timer;
+     Timer FPSTimer;
 // Texture tex;
      Rect blockClipRegions[Blocks::BLOCKS_COUNT] =
                                {Rect {0, 0, 0, 0},
@@ -82,7 +88,7 @@ struct Game{
      Rect blocksBoundingBoxes[maxNumberOfBlocksBoundingBoxes];
      V2 levelOffset = {22, 30};
 
-     
+
      // int level1[levelWidth * levelHeight] ={1,1,1,1,1,1,1,1,1,1,1,1,
      //                                        2,2,2,2,2,2,2,2,2,2,2,2,
      //                                        3,3,3,3,3,3,3,3,3,3,3,3,

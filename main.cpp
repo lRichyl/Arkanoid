@@ -61,7 +61,6 @@ int main(){
           //it will be so big that physics break.
           if(dt > 0 && dt < 0.1){
                game.GameLoop(dt);
-
           }
           Timer::dt = dt;
 
@@ -102,11 +101,11 @@ int main(){
                realfps =  1.f / (ms_per_frame / 1000.f);
 
           }
-          std::string fps_string = "FPS: "  + std::to_string((int)realfps);
+          // std::string fps_string = "FPS: "  + std::to_string((int)realfps);
           // char *c_string = &fps_string[0];
-          render_text(renderer, &test, &fps_string, V2 {0 , 599});
-
+          // render_text(renderer, &test, &fps_string, V2 {0 , 599});
           if(game.showFPS){
+               printf("%f\n", realfps);
                samples[sample_count] = ms_per_frame;
                sample_count++;
           }

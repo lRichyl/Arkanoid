@@ -258,6 +258,13 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
      V2 top_right_clip;
      V2 bottom_right_clip;
      float normalizedAlphaValue = alpha_value / 255.f;
+     Rect final_position;
+     if(!position){
+          final_position = {0.0f, (float)win->internalHeight, (float)win->internalWidth, (float)win->internalHeight};
+          // printf("%f %f %f %f", final_position.x, final_position.y, final_position.w, final_position.h);
+     }else{
+          final_position = *position;
+     }
 
      //The clip_region is used to select a part of a texture that we want to render.
      if(clip_region){
@@ -295,7 +302,7 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
      }
 
      //We do this so that if we try to draw outside the window we don't add data to the vertex buffer.
-     if((position->x + position->w >= 0) && (position->x <= win->internalWidth) && (position->y >= 0) && (position->y - position->h <= win->internalHeight)){
+     if((final_position.x + final_position.w >= 0) && (final_position.x <= win->internalWidth) && (final_position.y >= 0) && (final_position.y - final_position.h <= win->internalHeight)){
           // Batch *current_batch = &renderer->main_batch;
           float texture_slot_id = 0;
           if(check_if_texture_is_not_registered(*texture, batch)){
@@ -314,8 +321,8 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
           assert(batch->texture_index <= RendererInfo::MAX_TEXTURE_UNITS_PER_BATCH);
 
 
-          batch->vertex_buffer[batch->vertices_index] = position->x;
-          batch->vertex_buffer[batch->vertices_index + 1] = position->y;
+          batch->vertex_buffer[batch->vertices_index] = final_position.x;
+          batch->vertex_buffer[batch->vertices_index + 1] = final_position.y;
           batch->vertex_buffer[batch->vertices_index + 2] = top_left_clip.x;
           batch->vertex_buffer[batch->vertices_index + 3] = top_left_clip.y;
           batch->vertex_buffer[batch->vertices_index + 4] = texture_slot_id;
@@ -324,8 +331,8 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
           batch->vertex_buffer[batch->vertices_index + 7] = color.y;
           batch->vertex_buffer[batch->vertices_index + 8] = color.z;
 
-          batch->vertex_buffer[batch->vertices_index + 9] =  position->x;
-          batch->vertex_buffer[batch->vertices_index + 10] = position->y - position->h;
+          batch->vertex_buffer[batch->vertices_index + 9] =  final_position.x;
+          batch->vertex_buffer[batch->vertices_index + 10] = final_position.y - final_position.h;
           batch->vertex_buffer[batch->vertices_index + 11] = bottom_left_clip.x;
           batch->vertex_buffer[batch->vertices_index + 12] = bottom_left_clip.y;
           batch->vertex_buffer[batch->vertices_index + 13] = texture_slot_id;
@@ -334,8 +341,8 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
           batch->vertex_buffer[batch->vertices_index + 16] = color.y;
           batch->vertex_buffer[batch->vertices_index + 17] = color.z;
 
-          batch->vertex_buffer[batch->vertices_index + 18] = position->x + position->w;
-          batch->vertex_buffer[batch->vertices_index + 19] = position->y - position->h;
+          batch->vertex_buffer[batch->vertices_index + 18] = final_position.x + final_position.w;
+          batch->vertex_buffer[batch->vertices_index + 19] = final_position.y - final_position.h;
           batch->vertex_buffer[batch->vertices_index + 20] = bottom_right_clip.x;
           batch->vertex_buffer[batch->vertices_index + 21] = bottom_right_clip.y;
           batch->vertex_buffer[batch->vertices_index + 22] = texture_slot_id;
@@ -344,8 +351,8 @@ static void render_quad_on_batch(Renderer *renderer, Batch *batch, Rect *positio
           batch->vertex_buffer[batch->vertices_index + 25] = color.y;
           batch->vertex_buffer[batch->vertices_index + 26] = color.z;
 
-          batch->vertex_buffer[batch->vertices_index + 27] = position->x + position->w;
-          batch->vertex_buffer[batch->vertices_index + 28] = position->y;
+          batch->vertex_buffer[batch->vertices_index + 27] = final_position.x + final_position.w;
+          batch->vertex_buffer[batch->vertices_index + 28] = final_position.y;
           batch->vertex_buffer[batch->vertices_index + 29] = top_right_clip.x;
           batch->vertex_buffer[batch->vertices_index + 30] = top_right_clip.y;
           batch->vertex_buffer[batch->vertices_index + 31] = texture_slot_id;
