@@ -42,6 +42,7 @@ struct Game{
      void DrawCurrentLevel();
      void DoEvents();
      void InitLevels();
+     // void InitPowerUps();
      void MaybeLoadNextLevel();
      void DrawBall();
      void CalculateNumberOfBlocksToWin();
@@ -50,6 +51,8 @@ struct Game{
      void BallCollisionWithBlocks(float dt);
      void BallCollisionWithPaddle(float dt);
      void MaybeLaunchBall();
+
+     PowerUp CreatePowerUp(PowerUpType type, V2 position);
 
      //Only for development
      void ClearLevel();
@@ -74,6 +77,16 @@ struct Game{
                                 Rect {224,0, 32, 16}};
      Paddle paddle;
      Ball ball;
+
+     // PowerUp laserPower;
+     // PowerUp enlargePower;
+     // PowerUp catchPower;
+     // PowerUp slowPower;
+     // PowerUp disruptionPower;
+     // PowerUp extraPlayerPower;
+
+     PowerUp test;
+
      bool showFPS = false;
      // static const int levelWidth = 12;
      // static const int levelHeight = 7;

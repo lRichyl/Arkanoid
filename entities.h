@@ -29,6 +29,11 @@ struct Entity{
      void Draw(Renderer *renderer){
           render_quad(renderer, &boundingBox, &texture, &clippingBox);
      }
+
+     void SetPosition(V2 position){
+          boundingBox.x = position.x;
+          boundingBox.y = position.y;
+     }
 };
 
 // struct Block : public Entity{
@@ -42,12 +47,37 @@ struct Entity{
 //
 //      Texture texture;
 // };
+
+enum PowerUpType{
+     POWER_NONE = 0x0,
+     POWER_LASER = 0x1,
+     POWER_ENLARGE = 0x2,
+     POWER_CATCH = 0x4,
+     POWER_SLOW = 0x8,
+     POWER_DISRUPTION = 0x10,
+     POWER_EXTRA_PLAYER = 0x20
+};
+
+struct PowerUp : public Entity{
+     void Init(V2 position, Rect clippingBoxA, Texture textureA, PowerUpType typeA){
+          texture = textureA;
+          boundingBox = {position.x, position.y, 32, 16};
+          clippingBox = clippingBoxA;
+          type = typeA;
+     }
+     PowerUpType type = PowerUpType::POWER_NONE;
+};
+
 struct Paddle : public Entity{
      void Init(V2 position, Texture t, Renderer *renderer){
           boundingBox = {position.x, position.y, 64, 16};
           clippingBox = {0 , 0, 32 , 8};
           texture = t;
+          // powerupFlags |= PowerUpType::POWER_DISRUPTION | PowerUps::POWER_EXTRA_PLAYER;
+          // printf("%x\n", powerupFlags);
 
+          //All shaders should be compiled at the same time in the same place.
+          //This is temporary and will be moved to its own system.
           shader.name = "Player Shader";
           compile_shader_program(&shader, "assets/shaders/player_vertex_shader.txt", "assets/shaders/player_fragment_shader.txt");
           initialize_texture_sampler(shader);
@@ -64,6 +94,7 @@ struct Paddle : public Entity{
      V2 direction = {};
      float speed = 300;
      ShaderProgram shader;
+     int powerUpFlags = 0;
      // Texture texture;
 };
 

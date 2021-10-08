@@ -446,7 +446,7 @@ void print_batching_info(Renderer *renderer){
 }
 
 void renderer_draw(Renderer *renderer){
-     print_batching_info(renderer);
+     // print_batching_info(renderer);
      // Batch *current_batch = &renderer->main_batch;
 
 

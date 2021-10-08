@@ -13,9 +13,9 @@ Game::Game(Renderer *r, Window *w){
      renderer = r;
      window = w;
      InitLevels();
-     // levelList[0] = &level1;
-     // levelList[1] = &level2;
-     currentLevel = &levelList[0];
+     // InitPowerUps();
+     test = CreatePowerUp(PowerUpType::POWER_LASER, V2 {100,600});
+
      assert(currentLevel);
 
      paddle.Init(V2{384, 16}, arkanoidTexture, renderer);
@@ -75,9 +75,33 @@ void Game::InitLevels(){
      levelList.push_back(level4);
      levelList.push_back(level5);
 
+     currentLevel = &levelList[0];
 }
 
-static Rect backgroundPos = {0.0f, 60.f, 60.f, 60.f};
+// void Game::InitPowerUps(){
+//      laserPower.Init(Rect {32, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_LASER);
+//      enlargePower.Init(Rect {64, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_ENLARGE);
+//      catchPower.Init(Rect {96, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_CATCH);
+//      slowPower.Init(Rect {128, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_SLOW);
+//      disruptionPower.Init(Rect {160, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_DISRUPTION);
+//      extraPlayerPower.Init(Rect {192, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_EXTRA_PLAYER);
+// }
+
+PowerUp Game::CreatePowerUp(PowerUpType type, V2 position){
+     PowerUp power;
+     switch(type){
+          case POWER_LASER:        power.Init(position, Rect {32, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_LASER);break;
+          case POWER_ENLARGE:      power.Init(position, Rect {64, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_ENLARGE); break;
+          case POWER_CATCH:        power.Init(position, Rect {96, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_CATCH); break;
+          case POWER_SLOW:         power.Init(position, Rect {128, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_SLOW); break;
+          case POWER_DISRUPTION:   power.Init(position, Rect {160, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_DISRUPTION); break;
+          case POWER_EXTRA_PLAYER: power.Init(position, Rect {192, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_EXTRA_PLAYER); break;
+          default: power.type = PowerUpType::POWER_NONE;
+     }
+
+     return power;
+}
+
 void Level::DrawBackground(Renderer *renderer){
      render_quad(renderer,NULL, &background, NULL, false, 255, backgroundTint);
 }
@@ -142,6 +166,7 @@ void Game::DrawGame(float dt, float fps){
      DrawCurrentLevel();
      std::string blocksToWinString = std::to_string(numberOfBlocksToWin);
      render_text(renderer, &debugFont, &blocksToWinString, V2{400, 600}, V3{1.0f,1.0f,1.0f}, true);
+
      FPSTimer.Tick();
      static std::string fpsString;
      // if(showFPS && FPSTimer.isTimeReached){
@@ -161,6 +186,13 @@ void Game::DrawGame(float dt, float fps){
 
      ball.Draw(renderer);
      paddle.Draw(renderer);
+     test.Draw(renderer);
+     // laserPower.Draw(renderer);
+     // enlargePower.Draw(renderer);
+     // catchPower.Draw(renderer);
+     // slowPower.Draw(renderer);
+     // disruptionPower.Draw(renderer);
+     // extraPlayerPower.Draw(renderer);
 
      renderer_draw(renderer);
      swap_buffers(window);
