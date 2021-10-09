@@ -9,6 +9,8 @@
 #include "math.h"
 #include <string>
 #include <vector>
+#include <cstdlib>
+#include <ctime>
 
 
 struct Level{
@@ -50,6 +52,7 @@ struct Game{
      void ResetBlocksState();
      void BallCollisionWithBlocks(float dt);
      void BallCollisionWithPaddle(float dt);
+     void PowerUpCollisionWithPaddle();
      void MaybeLaunchBall();
 
      PowerUp CreatePowerUp(PowerUpType type, V2 position);
@@ -65,6 +68,12 @@ struct Game{
      Font FPSFont = Font("assets/fonts/Simvoni.ttf", 32);
      Timer timer;
      Timer FPSTimer;
+
+     int powerUpInitialProbability = 10;
+     int powerUpProbability;
+     int powerUpRandomNumber = 0;
+     std::vector<PowerUp> powerUpsOnScreen;
+     // PowerUpType selectedPowerUp;
 // Texture tex;
      Rect blockClipRegions[Blocks::BLOCKS_COUNT] =
                                {Rect {0, 0, 0, 0},

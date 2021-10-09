@@ -51,6 +51,7 @@ void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
                if(boundingBox.y < 0){
                     // ResetPosition(paddle);
                     state = BallState::ON_PADDLE;
+                    paddle->powerUpFlags = 0;
                }
 
                if(boundingBox.x < 0){
@@ -93,4 +94,8 @@ void Ball::Bounce(V2 penetration){
           boundingBox.x -= penetration.x;
           velocity.x *= -1;
      }
+}
+
+void PowerUp::Update(float dt){
+     boundingBox.y += gravity * dt;
 }

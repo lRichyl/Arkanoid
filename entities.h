@@ -55,7 +55,8 @@ enum PowerUpType{
      POWER_CATCH = 0x4,
      POWER_SLOW = 0x8,
      POWER_DISRUPTION = 0x10,
-     POWER_EXTRA_PLAYER = 0x20
+     POWER_EXTRA_PLAYER = 0x20,
+     POWER_COUNT = 6
 };
 
 struct PowerUp : public Entity{
@@ -65,7 +66,10 @@ struct PowerUp : public Entity{
           clippingBox = clippingBoxA;
           type = typeA;
      }
+     void Update(float dt);
+
      PowerUpType type = PowerUpType::POWER_NONE;
+     float gravity = -80.0f;
 };
 
 struct Paddle : public Entity{

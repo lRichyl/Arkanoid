@@ -12,6 +12,8 @@
 Game::Game(Renderer *r, Window *w){
      renderer = r;
      window = w;
+     powerUpProbability = powerUpInitialProbability;
+     srand(time(NULL));
      InitLevels();
      // InitPowerUps();
      test = CreatePowerUp(PowerUpType::POWER_LASER, V2 {100,600});
@@ -112,6 +114,7 @@ void Game::UpdateGame(float dt){
                CalculateNumberOfBlocksToWin(); //This should be calculated once at the start of every level
                GenerateBlocksBoundingBoxes();
                ResetBlocksState();
+               powerUpsOnScreen.clear();
                paddle.ResetPosition(window);
                ball.ResetPosition(&paddle);
                state = GameState::GAME_PLAYING;
@@ -124,11 +127,19 @@ void Game::UpdateGame(float dt){
 
                paddle.Update(dt, renderer);
                ball.Update(dt, renderer, &paddle);
+               for(int i = 0; i < powerUpsOnScreen.size(); i++){
+                    PowerUp *p = &powerUpsOnScreen[i];
+                    powerUpsOnScreen[i].Update(dt);
+
+                    if(p->boundingBox.y < 0) powerUpsOnScreen.erase(powerUpsOnScreen.begin() + i);
+               }
+               printf("%x\n", paddle.powerUpFlags);
                MaybeLaunchBall();
 
                //Collisions
                BallCollisionWithBlocks(dt);
                BallCollisionWithPaddle(dt);
+               PowerUpCollisionWithPaddle();
                if(numberOfBlocksToWin == 0){
                     if(nextLevel < levelList.size()){
                          // nextLevel++;
@@ -186,7 +197,11 @@ void Game::DrawGame(float dt, float fps){
 
      ball.Draw(renderer);
      paddle.Draw(renderer);
-     test.Draw(renderer);
+
+     for(int i = 0; i < powerUpsOnScreen.size(); i++){
+          powerUpsOnScreen[i].Draw(renderer);
+     }
+     // selectedPowerUp.Draw(renderer);
      // laserPower.Draw(renderer);
      // enlargePower.Draw(renderer);
      // catchPower.Draw(renderer);
@@ -219,6 +234,7 @@ void Game::DoEvents(){
 
 void Game::MaybeLaunchBall(){
      if(!ball.state == BallState::ON_PADDLE) return;
+     powerUpProbability = powerUpInitialProbability;
      if(IsKeyPressed(window, GLFW_KEY_SPACE)){
           float xVelocity = ball.speed / 2 * paddle.direction.x;
           ball.velocity.y = ball.speed;
@@ -306,6 +322,18 @@ void Game::BallCollisionWithBlocks(float dt){
                          if(currentLevel->layout[index] != Blocks::BLOCKS_BLACK){
                               blockStateMap[index] = 0;
                               numberOfBlocksToWin--;
+
+                              int powerChance = rand() % 100;
+                              printf("Chance %d\n", powerChance);
+                              if(powerChance < powerUpProbability){
+                                   int power = (rand() % PowerUpType::POWER_COUNT);
+                                   int finalPower = 1 << power;
+                                   PowerUp selectedPowerUp = CreatePowerUp((PowerUpType)finalPower, {ball.boundingBox.x,ball.boundingBox.y});
+                                   // printf("Power granted: %d\n\n", finalPower);
+                                   // printf("Type: %x\n",selectedPowerUp.type);
+                                   powerUpsOnScreen.push_back(selectedPowerUp);
+                              }
+                              powerUpProbability += 0.3;
                          }
                          ball.Bounce(penetration);
                          // Bounce(&ball.boundingBox,&ball.velocity, penetration);
@@ -350,5 +378,16 @@ void Game::BallCollisionWithPaddle(float dt){
           }
 
 
+     }
+}
+
+void Game::PowerUpCollisionWithPaddle(){
+     for(int i = 0; i < powerUpsOnScreen.size(); i++){
+          PowerUp *p = &powerUpsOnScreen[i];
+          V2 penetration;
+          if(DoRectsCollide(p->boundingBox, paddle.boundingBox, &penetration)){
+               paddle.powerUpFlags |= p->type;
+               powerUpsOnScreen.erase(powerUpsOnScreen.begin() + i);
+          }
      }
 }
