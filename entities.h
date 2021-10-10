@@ -98,7 +98,7 @@ struct Paddle : public Entity{
      V2 direction = {};
      float speed = 300;
      ShaderProgram shader;
-     int powerUpFlags = 0;
+     // int powerUpFlags = 0;
      // Texture texture;
 };
 
@@ -120,6 +120,18 @@ struct Ball : public Entity{
      float speed = 200;
      V2 velocity = {0, 0};
 
+};
+
+struct Laser : public Entity{
+     void Init(V2 position,Texture t){
+          boundingBox = {position.x, position.y, 8, 14};
+          clippingBox = {224 , 15, 8 , 14};
+          texture = t;
+     }
+
+     void Update(float dt);
+
+     float speed = 400;
 };
 
 

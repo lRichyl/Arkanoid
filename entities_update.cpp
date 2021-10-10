@@ -48,11 +48,7 @@ void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
                boundingBox.x += velocity.x * dt;
                boundingBox.y += velocity.y * dt;
 
-               if(boundingBox.y < 0){
-                    // ResetPosition(paddle);
-                    state = BallState::ON_PADDLE;
-                    paddle->powerUpFlags = 0;
-               }
+               
 
                if(boundingBox.x < 0){
                     float outwardDistance = 0 - boundingBox.x;
@@ -98,4 +94,8 @@ void Ball::Bounce(V2 penetration){
 
 void PowerUp::Update(float dt){
      boundingBox.y += gravity * dt;
+}
+
+void Laser::Update(float dt){
+     boundingBox.y += speed * dt;
 }

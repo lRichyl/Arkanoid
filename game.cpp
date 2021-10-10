@@ -12,11 +12,13 @@
 Game::Game(Renderer *r, Window *w){
      renderer = r;
      window = w;
+     assert(renderer);
+     assert(w);
      powerUpProbability = powerUpInitialProbability;
      srand(time(NULL));
      InitLevels();
      // InitPowerUps();
-     test = CreatePowerUp(PowerUpType::POWER_LASER, V2 {100,600});
+     // test = CreatePowerUp(PowerUpType::POWER_LASER, V2 {100,600});
 
      assert(currentLevel);
 
@@ -26,6 +28,7 @@ Game::Game(Renderer *r, Window *w){
      showFPS = true;
      timer.timeToWait = 2;
      FPSTimer.timeToWait = 0.5;
+     laserTimer.timeToWait = 0.3;
 }
 
 void Game::InitLevels(){
@@ -104,6 +107,23 @@ PowerUp Game::CreatePowerUp(PowerUpType type, V2 position){
      return power;
 }
 
+void Game::DoPowerUps(){
+     if(powerUpFlags & PowerUpType::POWER_LASER){
+          if(canShootLaser && IsKeyPressed(renderer->window, GLFW_KEY_SPACE)){
+               canShootLaser = false;
+
+               Laser laser;
+               V2 position = {(paddle.boundingBox.w / 4.0f) + paddle.boundingBox.x, paddle.boundingBox.y + paddle.boundingBox.h + 1.0f};
+               laser.Init(position, arkanoidTexture);
+               lasers.push_back(laser);
+          }else if(!canShootLaser){
+               laserTimer.Tick();
+               if(laserTimer.isTimeReached)
+                    canShootLaser = true;
+          }
+     }
+}
+
 void Level::DrawBackground(Renderer *renderer){
      render_quad(renderer,NULL, &background, NULL, false, 255, backgroundTint);
 }
@@ -115,31 +135,39 @@ void Game::UpdateGame(float dt){
                GenerateBlocksBoundingBoxes();
                ResetBlocksState();
                powerUpsOnScreen.clear();
+               lasers.clear();
                paddle.ResetPosition(window);
                ball.ResetPosition(&paddle);
                state = GameState::GAME_PLAYING;
                break;
           }
           case GAME_PLAYING:{
+               // powerUpFlags |= PowerUpType::POWER_LASER;
                DoEvents();
-
-
 
                paddle.Update(dt, renderer);
                ball.Update(dt, renderer, &paddle);
+               CheckIfBallWentBelowPaddle();
                for(int i = 0; i < powerUpsOnScreen.size(); i++){
                     PowerUp *p = &powerUpsOnScreen[i];
                     powerUpsOnScreen[i].Update(dt);
 
                     if(p->boundingBox.y < 0) powerUpsOnScreen.erase(powerUpsOnScreen.begin() + i);
                }
-               printf("%x\n", paddle.powerUpFlags);
+               for(int i = 0; i < lasers.size(); i++){
+                    lasers[i].Update(dt);
+                    if(lasers[i].boundingBox.y - lasers[i].boundingBox.h > window->internalHeight) lasers.erase(lasers.begin() + i);
+               }
+               // printf("Number of lasers: %d\n", lasers.size());
+               DoPowerUps();
+               printf("%x\n", powerUpFlags);
                MaybeLaunchBall();
 
                //Collisions
                BallCollisionWithBlocks(dt);
                BallCollisionWithPaddle(dt);
                PowerUpCollisionWithPaddle();
+               LaserCollisionWithBlocks();
                if(numberOfBlocksToWin == 0){
                     if(nextLevel < levelList.size()){
                          // nextLevel++;
@@ -197,9 +225,12 @@ void Game::DrawGame(float dt, float fps){
 
      ball.Draw(renderer);
      paddle.Draw(renderer);
-
      for(int i = 0; i < powerUpsOnScreen.size(); i++){
           powerUpsOnScreen[i].Draw(renderer);
+     }
+
+     for(int i = 0; i < lasers.size(); i++){
+          lasers[i].Draw(renderer);
      }
      // selectedPowerUp.Draw(renderer);
      // laserPower.Draw(renderer);
@@ -228,13 +259,28 @@ void Game::DoEvents(){
                     ClearLevel();
                }
           #endif
+          // if(e.key == GLFW_KEY_SPACE && e.action == GLFW_PRESS && ball.state == BallState::MOVING){
+          //      // printf("SUCCESS\n");
+          //      // ClearLevel();
+          //      canShootLaser = true;
+          // }
+     }
+}
+
+void Game::CheckIfBallWentBelowPaddle(){
+     if(ball.boundingBox.y < 0){
+          // ResetPosition(paddle);
+          ball.state = BallState::ON_PADDLE;
+          powerUpFlags = 0;
+          powerUpProbability = powerUpInitialProbability;
+
      }
 }
 
 
 void Game::MaybeLaunchBall(){
      if(!ball.state == BallState::ON_PADDLE) return;
-     powerUpProbability = powerUpInitialProbability;
+     // powerUpFlags = 0;
      if(IsKeyPressed(window, GLFW_KEY_SPACE)){
           float xVelocity = ball.speed / 2 * paddle.direction.x;
           ball.velocity.y = ball.speed;
@@ -324,7 +370,7 @@ void Game::BallCollisionWithBlocks(float dt){
                               numberOfBlocksToWin--;
 
                               int powerChance = rand() % 100;
-                              printf("Chance %d\n", powerChance);
+                              // printf("Chance %d\n", powerChance);
                               if(powerChance < powerUpProbability){
                                    int power = (rand() % PowerUpType::POWER_COUNT);
                                    int finalPower = 1 << power;
@@ -333,7 +379,7 @@ void Game::BallCollisionWithBlocks(float dt){
                                    // printf("Type: %x\n",selectedPowerUp.type);
                                    powerUpsOnScreen.push_back(selectedPowerUp);
                               }
-                              powerUpProbability += 0.3;
+                              powerUpProbability += 2;
                          }
                          ball.Bounce(penetration);
                          // Bounce(&ball.boundingBox,&ball.velocity, penetration);
@@ -386,8 +432,30 @@ void Game::PowerUpCollisionWithPaddle(){
           PowerUp *p = &powerUpsOnScreen[i];
           V2 penetration;
           if(DoRectsCollide(p->boundingBox, paddle.boundingBox, &penetration)){
-               paddle.powerUpFlags |= p->type;
+               powerUpFlags |= p->type;
                powerUpsOnScreen.erase(powerUpsOnScreen.begin() + i);
+          }
+     }
+}
+
+void Game::LaserCollisionWithBlocks(){
+     V2 penetration;
+     for(int y = 0; y < Level::levelHeight; y++){
+          for(int x = 0; x < Level::levelWidth; x++){
+               int index = (Level::levelWidth * y) + x;
+               if(blockStateMap[index]){
+                    for(int i = 0; i < lasers.size(); i++){
+                         Laser *laser = &lasers[i];
+                         if(DoRectsCollide(laser->boundingBox, blocksBoundingBoxes[index], &penetration)){
+                              lasers.erase(lasers.begin() + i);
+                              if(currentLevel->layout[index] != Blocks::BLOCKS_BLACK){
+                                   blockStateMap[index] = 0;
+                                   numberOfBlocksToWin--;
+                              }
+                         }
+
+                    }
+               }
           }
      }
 }

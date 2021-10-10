@@ -47,13 +47,16 @@ struct Game{
      // void InitPowerUps();
      void MaybeLoadNextLevel();
      void DrawBall();
+     void CheckIfBallWentBelowPaddle();
      void CalculateNumberOfBlocksToWin();
      void GenerateBlocksBoundingBoxes();
      void ResetBlocksState();
      void BallCollisionWithBlocks(float dt);
      void BallCollisionWithPaddle(float dt);
      void PowerUpCollisionWithPaddle();
+     void LaserCollisionWithBlocks();
      void MaybeLaunchBall();
+     void DoPowerUps();
 
      PowerUp CreatePowerUp(PowerUpType type, V2 position);
 
@@ -72,7 +75,11 @@ struct Game{
      int powerUpInitialProbability = 10;
      int powerUpProbability;
      int powerUpRandomNumber = 0;
+     int powerUpFlags = 0;
      std::vector<PowerUp> powerUpsOnScreen;
+     bool canShootLaser = true;
+     std::vector<Laser> lasers;
+     Timer laserTimer;
      // PowerUpType selectedPowerUp;
 // Texture tex;
      Rect blockClipRegions[Blocks::BLOCKS_COUNT] =
@@ -86,6 +93,7 @@ struct Game{
                                 Rect {224,0, 32, 16}};
      Paddle paddle;
      Ball ball;
+     // Laser test;
 
      // PowerUp laserPower;
      // PowerUp enlargePower;
@@ -94,7 +102,7 @@ struct Game{
      // PowerUp disruptionPower;
      // PowerUp extraPlayerPower;
 
-     PowerUp test;
+     // PowerUp test;
 
      bool showFPS = false;
      // static const int levelWidth = 12;
