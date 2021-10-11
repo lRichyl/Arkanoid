@@ -28,7 +28,8 @@ Game::Game(Renderer *r, Window *w){
      showFPS = true;
      timer.timeToWait = 2;
      FPSTimer.timeToWait = 0.5;
-     laserTimer.timeToWait = 0.3;
+     laserShootTimer.timeToWait = 0.3;
+     laserActiveTimer.timeToWait = 5;
 }
 
 void Game::InitLevels(){
@@ -101,7 +102,7 @@ PowerUp Game::CreatePowerUp(PowerUpType type, V2 position){
           case POWER_SLOW:         power.Init(position, Rect {128, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_SLOW); break;
           case POWER_DISRUPTION:   power.Init(position, Rect {160, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_DISRUPTION); break;
           case POWER_EXTRA_PLAYER: power.Init(position, Rect {192, 16, 32, 16}, arkanoidTexture, PowerUpType::POWER_EXTRA_PLAYER); break;
-          default: power.type = PowerUpType::POWER_NONE;
+          default: power.type = (PowerUpType)0;
      }
 
      return power;
@@ -109,6 +110,7 @@ PowerUp Game::CreatePowerUp(PowerUpType type, V2 position){
 
 void Game::DoPowerUps(){
      if(powerUpFlags & PowerUpType::POWER_LASER){
+          laserActiveTimer.Tick();
           if(canShootLaser && IsKeyPressed(renderer->window, GLFW_KEY_SPACE)){
                canShootLaser = false;
 
@@ -117,10 +119,18 @@ void Game::DoPowerUps(){
                laser.Init(position, arkanoidTexture);
                lasers.push_back(laser);
           }else if(!canShootLaser){
-               laserTimer.Tick();
-               if(laserTimer.isTimeReached)
+               laserShootTimer.Tick();
+               if(laserShootTimer.isTimeReached)
                     canShootLaser = true;
           }
+
+          if(laserActiveTimer.isTimeReached){
+               printf("A%x\n", powerUpFlags);
+
+               powerUpFlags &=  ~(1 << (PowerUpType::POWER_LASER >> 1));
+               printf("B%x\n", powerUpFlags);
+          }
+
      }
 }
 
@@ -147,7 +157,6 @@ void Game::UpdateGame(float dt){
 
                paddle.Update(dt, renderer);
                ball.Update(dt, renderer, &paddle);
-               CheckIfBallWentBelowPaddle();
                for(int i = 0; i < powerUpsOnScreen.size(); i++){
                     PowerUp *p = &powerUpsOnScreen[i];
                     powerUpsOnScreen[i].Update(dt);
@@ -160,8 +169,9 @@ void Game::UpdateGame(float dt){
                }
                // printf("Number of lasers: %d\n", lasers.size());
                DoPowerUps();
-               printf("%x\n", powerUpFlags);
+               // printf("%x\n", powerUpFlags);
                MaybeLaunchBall();
+               CheckIfBallWentBelowPaddle();
 
                //Collisions
                BallCollisionWithBlocks(dt);
@@ -280,7 +290,6 @@ void Game::CheckIfBallWentBelowPaddle(){
 
 void Game::MaybeLaunchBall(){
      if(!ball.state == BallState::ON_PADDLE) return;
-     // powerUpFlags = 0;
      if(IsKeyPressed(window, GLFW_KEY_SPACE)){
           float xVelocity = ball.speed / 2 * paddle.direction.x;
           ball.velocity.y = ball.speed;

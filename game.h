@@ -77,9 +77,11 @@ struct Game{
      int powerUpRandomNumber = 0;
      int powerUpFlags = 0;
      std::vector<PowerUp> powerUpsOnScreen;
+
      bool canShootLaser = true;
      std::vector<Laser> lasers;
-     Timer laserTimer;
+     Timer laserShootTimer;
+     Timer laserActiveTimer;
      // PowerUpType selectedPowerUp;
 // Texture tex;
      Rect blockClipRegions[Blocks::BLOCKS_COUNT] =

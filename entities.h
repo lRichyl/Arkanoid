@@ -49,7 +49,6 @@ struct Entity{
 // };
 
 enum PowerUpType{
-     POWER_NONE = 0x0,
      POWER_LASER = 0x1,
      POWER_ENLARGE = 0x2,
      POWER_CATCH = 0x4,
@@ -68,7 +67,7 @@ struct PowerUp : public Entity{
      }
      void Update(float dt);
 
-     PowerUpType type = PowerUpType::POWER_NONE;
+     PowerUpType type;
      float gravity = -80.0f;
 };
 
