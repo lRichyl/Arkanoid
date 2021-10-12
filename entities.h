@@ -87,13 +87,17 @@ struct Paddle : public Entity{
           load_mvp_to_shader(renderer, shader);
      }
 
+     void Enlarge();
+     void ResetSize();
+
      void Update(float dt, Renderer *renderer);
      // void Draw(Renderer *renderer){
      //      render_quad(renderer, &boundingBox, &texture, &clippingBox);
      // }
      void ResetPosition(Window *window);
      // void Draw(Renderer *renderer);
-
+     float normalWidth = 64;
+     float enlargedWidth = 128;
      V2 direction = {};
      float speed = 300;
      ShaderProgram shader;

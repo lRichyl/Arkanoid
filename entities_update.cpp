@@ -32,6 +32,13 @@ void Paddle::ResetPosition(Window *window){
      boundingBox.x = window->internalWidth/2.0f - boundingBox.w/2.0f;
 }
 
+void Paddle::Enlarge(){
+     boundingBox.w = enlargedWidth;
+}
+void Paddle::ResetSize(){
+     boundingBox.w = normalWidth;
+}
+
 void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
      switch(state){
           case ON_PADDLE:{
@@ -48,7 +55,7 @@ void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
                boundingBox.x += velocity.x * dt;
                boundingBox.y += velocity.y * dt;
 
-               
+
 
                if(boundingBox.x < 0){
                     float outwardDistance = 0 - boundingBox.x;

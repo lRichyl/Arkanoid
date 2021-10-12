@@ -132,6 +132,10 @@ void Game::DoPowerUps(){
           }
 
      }
+
+     // if(powerUpFlags & PowerUpType::POWER_ENLARGE){
+     //
+     // }
 }
 
 void Level::DrawBackground(Renderer *renderer){
@@ -284,6 +288,7 @@ void Game::CheckIfBallWentBelowPaddle(){
           powerUpFlags = 0;
           powerUpProbability = powerUpInitialProbability;
 
+          paddle.ResetSize();
      }
 }
 
@@ -442,6 +447,9 @@ void Game::PowerUpCollisionWithPaddle(){
           V2 penetration;
           if(DoRectsCollide(p->boundingBox, paddle.boundingBox, &penetration)){
                powerUpFlags |= p->type;
+               if(powerUpFlags & PowerUpType::POWER_ENLARGE){
+                    paddle.Enlarge();
+               }
                powerUpsOnScreen.erase(powerUpsOnScreen.begin() + i);
           }
      }
