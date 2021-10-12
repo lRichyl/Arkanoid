@@ -82,6 +82,8 @@ struct Game{
      std::vector<Laser> lasers;
      Timer laserShootTimer;
      Timer laserActiveTimer;
+
+     Timer catchTimer;
      // PowerUpType selectedPowerUp;
 // Texture tex;
      Rect blockClipRegions[Blocks::BLOCKS_COUNT] =

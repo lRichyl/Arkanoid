@@ -47,6 +47,16 @@ void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
                ResetPosition(paddle);
                break;
           }
+          case ON_CATCH:{
+               // velocity.x = 0;
+               // velocity.y = 0;
+               //ResetPosition(paddle);
+               // state = BallState::ON_PADDLE;
+               // float relativePosition = boundingBox.x - paddle->boundingBox.x;
+               boundingBox.x = paddle->boundingBox.x + onCatchRelativePosition;
+               printf("Relative Pos %f, Paddle Pos %f\n", onCatchRelativePosition, paddle->boundingBox.x);
+               break;
+          }
           case MOVING:{
                if(velocity.y >  300) velocity.y =  300;
                if(velocity.y < -300) velocity.y = -300;

@@ -24,6 +24,12 @@ void Timer::Pause(){
 void Timer::Stop(){
      isPaused = true;
      isStopped = true;
+     // isTimeReached = false;
+}
+void Timer::Reset(){
+     Stop();
+     isTimeReached = false;
+     timeCount = 0;
 }
 
 void Timer::Resume(){

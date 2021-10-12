@@ -18,6 +18,7 @@ enum Blocks{
 
 enum BallState{
      ON_PADDLE,
+     ON_CATCH,
      MOVING
 };
 
@@ -35,18 +36,6 @@ struct Entity{
           boundingBox.y = position.y;
      }
 };
-
-// struct Block : public Entity{
-//
-//      void Init(V2 bBox, Rect clipBox, Texture t){
-//           boundingBox = {bBox.x, bBox.y, size.x, size.y};
-//           clippingBox = clipBox;
-//           texture = t;
-//      }
-//
-//
-//      Texture texture;
-// };
 
 enum PowerUpType{
      POWER_LASER = 0x1,
@@ -122,6 +111,7 @@ struct Ball : public Entity{
      BallState state = ON_PADDLE;
      float speed = 200;
      V2 velocity = {0, 0};
+     float onCatchRelativePosition;
 
 };
 

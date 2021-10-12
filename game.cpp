@@ -30,6 +30,7 @@ Game::Game(Renderer *r, Window *w){
      FPSTimer.timeToWait = 0.5;
      laserShootTimer.timeToWait = 0.3;
      laserActiveTimer.timeToWait = 5;
+     catchTimer.timeToWait = 3;
 }
 
 void Game::InitLevels(){
@@ -294,12 +295,17 @@ void Game::CheckIfBallWentBelowPaddle(){
 
 
 void Game::MaybeLaunchBall(){
-     if(!ball.state == BallState::ON_PADDLE) return;
-     if(IsKeyPressed(window, GLFW_KEY_SPACE)){
-          float xVelocity = ball.speed / 2 * paddle.direction.x;
-          ball.velocity.y = ball.speed;
-          ball.velocity.x = xVelocity;
-          ball.state = BallState::MOVING;
+     if(ball.state == BallState::ON_PADDLE || ball.state == BallState::ON_CATCH){
+          if(powerUpFlags & PowerUpType::POWER_CATCH){
+               catchTimer.Tick();
+          }else if(catchTimer.timeCount > 0) catchTimer.Reset();
+          if(IsKeyPressed(window, GLFW_KEY_SPACE) || catchTimer.isTimeReached){
+               float xVelocity = ball.speed / 2 * paddle.direction.x;
+               ball.velocity.y = ball.speed;
+               ball.velocity.x = xVelocity;
+               ball.state = BallState::MOVING;
+          }
+
      }
 }
 
@@ -393,7 +399,7 @@ void Game::BallCollisionWithBlocks(float dt){
                                    // printf("Type: %x\n",selectedPowerUp.type);
                                    powerUpsOnScreen.push_back(selectedPowerUp);
                               }
-                              powerUpProbability += 2;
+                              powerUpProbability += 50;
                          }
                          ball.Bounce(penetration);
                          // Bounce(&ball.boundingBox,&ball.velocity, penetration);
@@ -408,33 +414,44 @@ void Game::BallCollisionWithPaddle(float dt){
      V2 penetration;
      if(!ball.state == BallState::MOVING) return;
      if(DoRectsCollide(ball.boundingBox, paddle.boundingBox, &penetration)){
-          ball.Bounce(penetration);
-          float ballCenter = ball.boundingBox.x + ball.boundingBox.w / 2;
-          float ballPositionRelativeToPaddle = ballCenter - paddle.boundingBox.x;
-          float bounceCoefficient = (ballPositionRelativeToPaddle / (paddle.boundingBox.w / 2)) - 1;
-          // printf("ball center: %f\n", ballCenter);
-          // printf("ball position relative: %f\n", ballPositionRelativeToPaddle);
-          // printf("bounce coefficient: %f\n", bounceCoefficient);
-          float bounceSpeed;
-
-          if(paddle.direction.x == 0){
-               bounceSpeed = ball.speed;
-
-               if (bounceCoefficient < 0) {
-                    bounceSpeed *= -1;
+          if(powerUpFlags & PowerUpType::POWER_CATCH){
+               if(penetration.y < 0){
+                    ball.boundingBox.y -= penetration.y;
+                    ball.onCatchRelativePosition = ball.boundingBox.x - paddle.boundingBox.x;
+                    ball.state = BallState::ON_CATCH;
+               }else{
+                    ball.Bounce(penetration);
                }
-               else if(bounceCoefficient == 0){
-                    bounceSpeed = 0;
-               }
-               // printf("bounce coefficient: %f\n", bounceCoefficient);
-               ball.velocity.x = bounceSpeed;
           }else{
-               if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = paddle.speed;
-               else bounceSpeed = 0;
-               float xVelocity = sqrt(pow(ball.velocity.y, 2) + pow(bounceSpeed, 2));
-               xVelocity *= bounceCoefficient;
-               xVelocity += paddle.speed * paddle.direction.x;
-               ball.velocity.x = xVelocity;
+               ball.Bounce(penetration);
+               float ballCenter = ball.boundingBox.x + ball.boundingBox.w / 2;
+               float ballPositionRelativeToPaddle = ballCenter - paddle.boundingBox.x;
+               float bounceCoefficient = (ballPositionRelativeToPaddle / (paddle.boundingBox.w / 2)) - 1;
+               // printf("ball center: %f\n", ballCenter);
+               // printf("ball position relative: %f\n", ballPositionRelativeToPaddle);
+               // printf("bounce coefficient: %f\n", bounceCoefficient);
+               float bounceSpeed;
+
+               if(paddle.direction.x == 0){
+                    bounceSpeed = ball.speed;
+
+                    if (bounceCoefficient < 0) {
+                         bounceSpeed *= -1;
+                    }
+                    else if(bounceCoefficient == 0){
+                         bounceSpeed = 0;
+                    }
+                    // printf("bounce coefficient: %f\n", bounceCoefficient);
+                    ball.velocity.x = bounceSpeed;
+               }else{
+                    if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = paddle.speed;
+                    else bounceSpeed = 0;
+                    float xVelocity = sqrt(pow(ball.velocity.y, 2) + pow(bounceSpeed, 2));
+                    xVelocity *= bounceCoefficient;
+                    xVelocity += paddle.speed * paddle.direction.x;
+                    ball.velocity.x = xVelocity;
+               }
+
           }
 
 
