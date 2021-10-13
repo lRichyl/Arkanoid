@@ -298,7 +298,9 @@ void Game::MaybeLaunchBall(){
      if(ball.state == BallState::ON_PADDLE || ball.state == BallState::ON_CATCH){
           if(powerUpFlags & PowerUpType::POWER_CATCH){
                catchTimer.Tick();
-          }else if(catchTimer.timeCount > 0) catchTimer.Reset();
+          }
+
+          printf("time: %f\n", catchTimer.timeCount);
           if(IsKeyPressed(window, GLFW_KEY_SPACE) || catchTimer.isTimeReached){
                float xVelocity = ball.speed / 2 * paddle.direction.x;
                ball.velocity.y = ball.speed;
@@ -419,6 +421,7 @@ void Game::BallCollisionWithPaddle(float dt){
                     ball.boundingBox.y -= penetration.y;
                     ball.onCatchRelativePosition = ball.boundingBox.x - paddle.boundingBox.x;
                     ball.state = BallState::ON_CATCH;
+                    catchTimer.timeCount = 0;
                }else{
                     ball.Bounce(penetration);
                }
