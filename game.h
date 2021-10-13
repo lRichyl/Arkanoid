@@ -58,6 +58,7 @@ struct Game{
      void MaybeLaunchBall();
      void DoPowerUps();
 
+     float CalculateBallBounceCoefficient();
      PowerUp CreatePowerUp(PowerUpType type, V2 position);
 
      //Only for development

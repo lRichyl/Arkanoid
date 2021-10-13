@@ -1,6 +1,7 @@
 TODO
 
 
-- Add power-ups
+- Add the disruption and extra player power-ups.
+
 - Implement sound using OpenAl.
-- Make a timed text on the screen using a queue.
+- Make a timed text on the screen using a queue (for debugging);

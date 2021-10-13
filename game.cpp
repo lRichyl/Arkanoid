@@ -118,7 +118,12 @@ void Game::DoPowerUps(){
                Laser laser;
                V2 position = {(paddle.boundingBox.w / 4.0f) + paddle.boundingBox.x, paddle.boundingBox.y + paddle.boundingBox.h + 1.0f};
                laser.Init(position, arkanoidTexture);
+               Laser laser1;
+               V2 position1 = {(paddle.boundingBox.w / 4.0f * 3.0f) + paddle.boundingBox.x, paddle.boundingBox.y + paddle.boundingBox.h + 1.0f};
+               laser1.Init(position1, arkanoidTexture);
+
                lasers.push_back(laser);
+               lasers.push_back(laser1);
           }else if(!canShootLaser){
                laserShootTimer.Tick();
                if(laserShootTimer.isTimeReached)
@@ -302,10 +307,15 @@ void Game::MaybeLaunchBall(){
 
           printf("time: %f\n", catchTimer.timeCount);
           if(IsKeyPressed(window, GLFW_KEY_SPACE) || catchTimer.isTimeReached){
-               float xVelocity = ball.speed / 2 * paddle.direction.x;
-               ball.velocity.y = ball.speed;
-               ball.velocity.x = xVelocity;
-               ball.state = BallState::MOVING;
+               float bounceCoefficient = CalculateBallBounceCoefficient();
+               // if(powerUpFlags & PowerUpType::POWER_CATCH){
+
+               // }else{
+                    // float xVelocity = ball.speed / 2 * paddle.direction.x;
+                    ball.velocity.x = ball.speed * bounceCoefficient;
+                    ball.velocity.y = ball.speed;
+                    ball.state = BallState::MOVING;
+               // }
           }
 
      }
@@ -412,6 +422,13 @@ void Game::BallCollisionWithBlocks(float dt){
      }
 }
 
+float Game::CalculateBallBounceCoefficient(){
+     float ballCenter = ball.boundingBox.x + ball.boundingBox.w / 2;
+     float ballPositionRelativeToPaddle = ballCenter - paddle.boundingBox.x;
+     float bounceCoefficient = (ballPositionRelativeToPaddle / (paddle.boundingBox.w / 2)) - 1;
+     return bounceCoefficient;
+}
+
 void Game::BallCollisionWithPaddle(float dt){
      V2 penetration;
      if(!ball.state == BallState::MOVING) return;
@@ -426,34 +443,39 @@ void Game::BallCollisionWithPaddle(float dt){
                     ball.Bounce(penetration);
                }
           }else{
-               ball.Bounce(penetration);
-               float ballCenter = ball.boundingBox.x + ball.boundingBox.w / 2;
-               float ballPositionRelativeToPaddle = ballCenter - paddle.boundingBox.x;
-               float bounceCoefficient = (ballPositionRelativeToPaddle / (paddle.boundingBox.w / 2)) - 1;
+
+               // float ballCenter = ball.boundingBox.x + ball.boundingBox.w / 2;
+               // float ballPositionRelativeToPaddle = ballCenter - paddle.boundingBox.x;
+               float bounceCoefficient = CalculateBallBounceCoefficient();
+
                // printf("ball center: %f\n", ballCenter);
                // printf("ball position relative: %f\n", ballPositionRelativeToPaddle);
                // printf("bounce coefficient: %f\n", bounceCoefficient);
                float bounceSpeed;
 
-               if(paddle.direction.x == 0){
-                    bounceSpeed = ball.speed;
+               // if(paddle.direction.x == 0){
+               //      bounceSpeed = ball.speed;
+               //
+               //      if (bounceCoefficient < 0) {
+               //           bounceSpeed *= -1;
+               //      }
+               //      else if(bounceCoefficient == 0){
+               //           bounceSpeed = 0;
+               //      }
+               //      // printf("bounce coefficient: %f\n", bounceCoefficient);
+               //      ball.velocity.x = bounceSpeed;
+               // }else{
+               if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = ball.speed;
+               else bounceSpeed = 0;
 
-                    if (bounceCoefficient < 0) {
-                         bounceSpeed *= -1;
-                    }
-                    else if(bounceCoefficient == 0){
-                         bounceSpeed = 0;
-                    }
-                    // printf("bounce coefficient: %f\n", bounceCoefficient);
-                    ball.velocity.x = bounceSpeed;
-               }else{
-                    if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = paddle.speed;
-                    else bounceSpeed = 0;
-                    float xVelocity = sqrt(pow(ball.velocity.y, 2) + pow(bounceSpeed, 2));
-                    xVelocity *= bounceCoefficient;
-                    xVelocity += paddle.speed * paddle.direction.x;
-                    ball.velocity.x = xVelocity;
-               }
+               ball.Bounce(penetration);
+               ball.velocity.x = ball.speed * bounceCoefficient;
+               ball.velocity.y = ball.speed;
+               // float xVelocity = sqrt(pow(ball.velocity.y, 2) + pow(bounceSpeed, 2));
+               // xVelocity *= bounceCoefficient;
+               // xVelocity += paddle.speed * paddle.direction.x;
+
+               // }
 
           }
 
@@ -467,8 +489,14 @@ void Game::PowerUpCollisionWithPaddle(){
           V2 penetration;
           if(DoRectsCollide(p->boundingBox, paddle.boundingBox, &penetration)){
                powerUpFlags |= p->type;
-               if(powerUpFlags & PowerUpType::POWER_ENLARGE){
+               if(p->type == PowerUpType::POWER_ENLARGE){
                     paddle.Enlarge();
+               }
+
+               if(p->type == PowerUpType::POWER_SLOW){
+                    ball.speed -= ball.speed * 0.5f;
+                    ball.velocity.x *= 0.5f;
+                    ball.velocity.y *= 0.5f;
                }
                powerUpsOnScreen.erase(powerUpsOnScreen.begin() + i);
           }

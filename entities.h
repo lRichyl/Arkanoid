@@ -110,6 +110,7 @@ struct Ball : public Entity{
      // Texture = texture;
      BallState state = ON_PADDLE;
      float speed = 200;
+     float defaultSpeed = 200;
      V2 velocity = {0, 0};
      float onCatchRelativePosition;
 

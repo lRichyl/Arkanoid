@@ -91,7 +91,7 @@ void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
 
 void Ball::ResetPosition(Paddle *paddle){
      state = BallState::ON_PADDLE;
-     float x = paddle->boundingBox.x + paddle->boundingBox.w/2 - boundingBox.w/2;
+     float x = paddle->boundingBox.x + paddle->boundingBox.w*.75 - boundingBox.w/2;
      float y = paddle->boundingBox.y + boundingBox.h;
      boundingBox.x = x;
      boundingBox.y = y + 1;
