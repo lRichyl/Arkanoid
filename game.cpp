@@ -109,7 +109,7 @@ PowerUp Game::CreatePowerUp(PowerUpType type, V2 position){
      return power;
 }
 
-void Game::DoPowerUps(){
+void Game::DoLaserPowerUp(){
      if(powerUpFlags & PowerUpType::POWER_LASER){
           laserActiveTimer.Tick();
           if(canShootLaser && IsKeyPressed(renderer->window, GLFW_KEY_SPACE)){
@@ -139,9 +139,7 @@ void Game::DoPowerUps(){
 
      }
 
-     // if(powerUpFlags & PowerUpType::POWER_ENLARGE){
-     //
-     // }
+
 }
 
 void Level::DrawBackground(Renderer *renderer){
@@ -151,7 +149,7 @@ void Level::DrawBackground(Renderer *renderer){
 void Game::UpdateGame(float dt){
      switch(state){
           case GAME_LEVEL_LOADING:{
-               CalculateNumberOfBlocksToWin(); //This should be calculated once at the start of every level
+               CalculateNumberOfBlocksToWin();
                GenerateBlocksBoundingBoxes();
                ResetBlocksState();
                powerUpsOnScreen.clear();
@@ -177,9 +175,8 @@ void Game::UpdateGame(float dt){
                     lasers[i].Update(dt);
                     if(lasers[i].boundingBox.y - lasers[i].boundingBox.h > window->internalHeight) lasers.erase(lasers.begin() + i);
                }
-               // printf("Number of lasers: %d\n", lasers.size());
-               DoPowerUps();
-               // printf("%x\n", powerUpFlags);
+
+               DoLaserPowerUp();
                MaybeLaunchBall();
                CheckIfBallWentBelowPaddle();
 
@@ -202,16 +199,11 @@ void Game::UpdateGame(float dt){
                break;
           }
           case GAME_LEVEL_TRANSITION:{
-               // static std::string completedString = "COMPLETED";
                timer.Tick();
                if(timer.isTimeReached){
                     nextLevel++;
                     currentLevel = &levelList[nextLevel];
                     state = GameState::GAME_LEVEL_LOADING;
-               }else{
-                    // render_text(renderer, &debugFont, &currentLevel->name, V2{400, 300}, V3{1.0f,1.0f,1.0f}, true);
-                    // render_text(renderer, &debugFont, &completedString, V2{400, 270}, V3{1.0f,1.0f,1.0f}, true);
-
                }
                break;
           }
@@ -228,10 +220,9 @@ void Game::DrawGame(float dt, float fps){
 
      FPSTimer.Tick();
      static std::string fpsString;
-     // if(showFPS && FPSTimer.isTimeReached){
      int fpsInt = (int)fps;
      fpsString = std::to_string(fpsInt);
-     // }
+
      if(showFPS){
           render_text(renderer, &FPSFont, &fpsString, V2{0, (float)window->internalHeight}, V3{0.0f,1.0f,0.0f});
      }
@@ -252,13 +243,7 @@ void Game::DrawGame(float dt, float fps){
      for(int i = 0; i < lasers.size(); i++){
           lasers[i].Draw(renderer);
      }
-     // selectedPowerUp.Draw(renderer);
-     // laserPower.Draw(renderer);
-     // enlargePower.Draw(renderer);
-     // catchPower.Draw(renderer);
-     // slowPower.Draw(renderer);
-     // disruptionPower.Draw(renderer);
-     // extraPlayerPower.Draw(renderer);
+
 
      renderer_draw(renderer);
      swap_buffers(window);
@@ -279,17 +264,12 @@ void Game::DoEvents(){
                     ClearLevel();
                }
           #endif
-          // if(e.key == GLFW_KEY_SPACE && e.action == GLFW_PRESS && ball.state == BallState::MOVING){
-          //      // printf("SUCCESS\n");
-          //      // ClearLevel();
-          //      canShootLaser = true;
-          // }
+
      }
 }
 
 void Game::CheckIfBallWentBelowPaddle(){
      if(ball.boundingBox.y < 0){
-          // ResetPosition(paddle);
           ball.state = BallState::ON_PADDLE;
           powerUpFlags = 0;
           powerUpProbability = powerUpInitialProbability;
@@ -308,20 +288,15 @@ void Game::MaybeLaunchBall(){
           printf("time: %f\n", catchTimer.timeCount);
           if(IsKeyPressed(window, GLFW_KEY_SPACE) || catchTimer.isTimeReached){
                float bounceCoefficient = CalculateBallBounceCoefficient();
-               // if(powerUpFlags & PowerUpType::POWER_CATCH){
 
-               // }else{
-                    // float xVelocity = ball.speed / 2 * paddle.direction.x;
-                    ball.velocity.x = ball.speed * bounceCoefficient;
-                    ball.velocity.y = ball.speed;
-                    ball.state = BallState::MOVING;
-               // }
+               ball.velocity.x = ball.speed * bounceCoefficient;
+               ball.velocity.y = ball.speed;
+               ball.state = BallState::MOVING;
           }
 
      }
 }
 
-//Generate this every time a new level is loaded.
 void Game::GenerateBlocksBoundingBoxes(){
      assert((Level::levelHeight * Level::levelWidth) <= maxNumberOfBlocksBoundingBoxes);
      for(int y = 0; y < Level::levelHeight; y++){
@@ -353,15 +328,11 @@ void Game::ResetBlocksState(){
 }
 
 void Game::ClearLevel(){
-     //This should be done only once when the key is pressed. Right now we detect
-     //it every frame so it causes the currentLevel to go out of bounds.
-     //We should use the glfw callback to detect it once.
      if(nextLevel < levelList.size() - 1){
           numberOfBlocksToWin = 0;
      }else{
           printf("There's no more levels\n");
      }
-     // state = GameState::GAME_LEVEL_LOADING;
 
 }
 
@@ -377,7 +348,6 @@ void Game::DrawCurrentLevel(){
      }
 }
 
-//Remember to do this calculation every time you change levels
 void Game::CalculateNumberOfBlocksToWin(){
      for(int y = 0; y < Level::levelHeight; y++){
           for(int x = 0; x < Level::levelWidth; x++){
@@ -414,7 +384,6 @@ void Game::BallCollisionWithBlocks(float dt){
                               powerUpProbability += 50;
                          }
                          ball.Bounce(penetration);
-                         // Bounce(&ball.boundingBox,&ball.velocity, penetration);
                          return; //Thiis is done so that you can't destroy many blocks at the same time.
                     }
                }
@@ -443,39 +412,18 @@ void Game::BallCollisionWithPaddle(float dt){
                     ball.Bounce(penetration);
                }
           }else{
+               // ball.Bounce(penetration);
+               if(penetration.y < 0){
+                    float bounceCoefficient = CalculateBallBounceCoefficient();
+                    float bounceSpeed;
+                    // if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = ball.speed;
+                    // else bounceSpeed = 0;
 
-               // float ballCenter = ball.boundingBox.x + ball.boundingBox.w / 2;
-               // float ballPositionRelativeToPaddle = ballCenter - paddle.boundingBox.x;
-               float bounceCoefficient = CalculateBallBounceCoefficient();
-
-               // printf("ball center: %f\n", ballCenter);
-               // printf("ball position relative: %f\n", ballPositionRelativeToPaddle);
-               // printf("bounce coefficient: %f\n", bounceCoefficient);
-               float bounceSpeed;
-
-               // if(paddle.direction.x == 0){
-               //      bounceSpeed = ball.speed;
-               //
-               //      if (bounceCoefficient < 0) {
-               //           bounceSpeed *= -1;
-               //      }
-               //      else if(bounceCoefficient == 0){
-               //           bounceSpeed = 0;
-               //      }
-               //      // printf("bounce coefficient: %f\n", bounceCoefficient);
-               //      ball.velocity.x = bounceSpeed;
-               // }else{
-               if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = ball.speed;
-               else bounceSpeed = 0;
-
-               ball.Bounce(penetration);
-               ball.velocity.x = ball.speed * bounceCoefficient;
-               ball.velocity.y = ball.speed;
-               // float xVelocity = sqrt(pow(ball.velocity.y, 2) + pow(bounceSpeed, 2));
-               // xVelocity *= bounceCoefficient;
-               // xVelocity += paddle.speed * paddle.direction.x;
-
-               // }
+                    ball.velocity.x = ball.speed * bounceCoefficient;
+                    ball.velocity.y = ball.speed;
+               }else{
+                    ball.Bounce(penetration);
+               }
 
           }
 

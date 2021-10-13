@@ -56,7 +56,7 @@ struct Game{
      void PowerUpCollisionWithPaddle();
      void LaserCollisionWithBlocks();
      void MaybeLaunchBall();
-     void DoPowerUps();
+     void DoLaserPowerUp();
 
      float CalculateBallBounceCoefficient();
      PowerUp CreatePowerUp(PowerUpType type, V2 position);
