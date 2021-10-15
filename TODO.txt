@@ -1,7 +1,15 @@
 TODO
 
+Game:
+- Add the extra player power-up.
+- Add score. Each block gives you 10 points, but each time you hit a block a multiplier
+     increases until the ball falls.
+- Add lives.
+- Black blocks can only be destroyed with lasers and give a base score of 50.
+- Show the score on top of the screen.
+- Take out the number of remaining blocks count.
+- Add an ending screen where your final score is displayed.
+- Implement sound using OpenAL.
 
-- Add the disruption and extra player power-ups.
-
-- Implement sound using OpenAl.
+Engine:
 - Make a timed text on the screen using a queue (for debugging);

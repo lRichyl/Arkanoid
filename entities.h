@@ -2,6 +2,7 @@
 #define PADDLE_H
 #include "renderer.h"
 #include "math.h"
+#include "time.h"
 #include <map>
 
 enum Blocks{
@@ -100,10 +101,14 @@ struct Ball : public Entity{
           clippingBox = {9 , 9, 8 , 7};
           texture = t;
           // velocity.y = speed;
+          catchTimer.timeToWait = 3;
      }
      void Update(float dt, Renderer *renderer, Paddle *paddle);
      void ResetPosition(Paddle *paddle);
+     void ResetSpeed();
+     void SetVelocityToSpeed();
      void Bounce(V2 penetration);
+     void SpeedUp();
      // void Draw(Renderer *renderer){
      //      render_quad(renderer, &boundingBox, &texture, &clippingBox, false, 255, V3 {1.0f,0.0f,0.0f});
      // }
@@ -111,8 +116,11 @@ struct Ball : public Entity{
      BallState state = ON_PADDLE;
      float speed = 200;
      float defaultSpeed = 200;
+     float maxSpeed = 400;
+     float speedUpPercentage = 0.2;
      V2 velocity = {0, 0};
      float onCatchRelativePosition;
+     Timer catchTimer;
 
 };
 

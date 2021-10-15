@@ -47,7 +47,7 @@ struct Game{
      // void InitPowerUps();
      void MaybeLoadNextLevel();
      void DrawBall();
-     void CheckIfBallWentBelowPaddle();
+     void ResetPowerUpsAndBallIfBallFalls();
      void CalculateNumberOfBlocksToWin();
      void GenerateBlocksBoundingBoxes();
      void ResetBlocksState();
@@ -58,7 +58,7 @@ struct Game{
      void MaybeLaunchBall();
      void DoLaserPowerUp();
 
-     float CalculateBallBounceCoefficient();
+     float CalculateBallBounceCoefficient(Ball *ball);
      PowerUp CreatePowerUp(PowerUpType type, V2 position);
 
      //Only for development
@@ -84,7 +84,7 @@ struct Game{
      Timer laserShootTimer;
      Timer laserActiveTimer;
 
-     Timer catchTimer;
+     // Timer catchTimer;
      // PowerUpType selectedPowerUp;
 // Texture tex;
      Rect blockClipRegions[Blocks::BLOCKS_COUNT] =
@@ -97,17 +97,8 @@ struct Game{
                                 Rect {192,0, 32, 16},
                                 Rect {224,0, 32, 16}};
      Paddle paddle;
-     Ball ball;
-     // Laser test;
+     std::vector<Ball> balls;
 
-     // PowerUp laserPower;
-     // PowerUp enlargePower;
-     // PowerUp catchPower;
-     // PowerUp slowPower;
-     // PowerUp disruptionPower;
-     // PowerUp extraPlayerPower;
-
-     // PowerUp test;
 
      bool showFPS = false;
      // static const int levelWidth = 12;

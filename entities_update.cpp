@@ -47,14 +47,14 @@ void Ball::Update(float dt, Renderer *renderer, Paddle *paddle){
           }
           case ON_CATCH:{
                boundingBox.x = paddle->boundingBox.x + onCatchRelativePosition;
-               printf("Relative Pos %f, Paddle Pos %f\n", onCatchRelativePosition, paddle->boundingBox.x);
+               // printf("Relative Pos %f, Paddle Pos %f\n", onCatchRelativePosition, paddle->boundingBox.x);
                break;
           }
           case MOVING:{
-               if(velocity.y >  300) velocity.y =  300;
-               if(velocity.y < -300) velocity.y = -300;
-               if(velocity.x >  300) velocity.x =  300;
-               if(velocity.x < -300) velocity.x = -300;
+               if(velocity.y >  maxSpeed) velocity.y =  maxSpeed;
+               if(velocity.y < -maxSpeed) velocity.y = -maxSpeed;
+               if(velocity.x >  maxSpeed) velocity.x =  maxSpeed;
+               if(velocity.x < -maxSpeed) velocity.x = -maxSpeed;
                boundingBox.x += velocity.x * dt;
                boundingBox.y += velocity.y * dt;
 
@@ -90,6 +90,14 @@ void Ball::ResetPosition(Paddle *paddle){
      boundingBox.y = y + 1;
 }
 
+void Ball::ResetSpeed(){
+     speed = defaultSpeed;
+}
+
+void Ball::SetVelocityToSpeed(){
+     velocity.x = speed;
+     velocity.y = speed;
+}
 void Ball::Bounce(V2 penetration){
      if(penetration.y > 0 || penetration.y < 0) {
           boundingBox.y -= penetration.y;
@@ -100,6 +108,10 @@ void Ball::Bounce(V2 penetration){
           boundingBox.x -= penetration.x;
           velocity.x *= -1;
      }
+}
+
+void Ball::SpeedUp(){
+     speed += speed * speedUpPercentage;
 }
 
 void PowerUp::Update(float dt){

@@ -23,14 +23,16 @@ Game::Game(Renderer *r, Window *w){
      assert(currentLevel);
 
      paddle.Init(V2{384, 16}, arkanoidTexture, renderer);
-     ball.Init(V2{0, 0}, arkanoidTexture);
-     ball.ResetPosition(&paddle);
+     Ball mainBall;
+     mainBall.Init(V2{0, 0}, arkanoidTexture);
+     mainBall.ResetPosition(&paddle);
+     balls.push_back(mainBall);
      showFPS = true;
      timer.timeToWait = 2;
      FPSTimer.timeToWait = 0.5;
      laserShootTimer.timeToWait = 0.3;
      laserActiveTimer.timeToWait = 5;
-     catchTimer.timeToWait = 3;
+     // catchTimer.timeToWait = 3;
 }
 
 void Game::InitLevels(){
@@ -131,10 +133,10 @@ void Game::DoLaserPowerUp(){
           }
 
           if(laserActiveTimer.isTimeReached){
-               printf("A%x\n", powerUpFlags);
+               // printf("A%x\n", powerUpFlags);
 
                powerUpFlags &=  ~(1 << (PowerUpType::POWER_LASER >> 1));
-               printf("B%x\n", powerUpFlags);
+               // printf("B%x\n", powerUpFlags);
           }
 
      }
@@ -155,7 +157,11 @@ void Game::UpdateGame(float dt){
                powerUpsOnScreen.clear();
                lasers.clear();
                paddle.ResetPosition(window);
-               ball.ResetPosition(&paddle);
+               for(int i = 0; i < balls.size(); i++){
+                    balls[i].ResetPosition(&paddle);
+                    balls[i].ResetSpeed();
+               }
+               // ball.ResetPosition(&paddle);
                state = GameState::GAME_PLAYING;
                break;
           }
@@ -164,7 +170,10 @@ void Game::UpdateGame(float dt){
                DoEvents();
 
                paddle.Update(dt, renderer);
-               ball.Update(dt, renderer, &paddle);
+
+               for(int i = 0; i < balls.size(); i++){
+                    balls[i].Update(dt, renderer, &paddle);
+               }
                for(int i = 0; i < powerUpsOnScreen.size(); i++){
                     PowerUp *p = &powerUpsOnScreen[i];
                     powerUpsOnScreen[i].Update(dt);
@@ -178,7 +187,7 @@ void Game::UpdateGame(float dt){
 
                DoLaserPowerUp();
                MaybeLaunchBall();
-               CheckIfBallWentBelowPaddle();
+               ResetPowerUpsAndBallIfBallFalls();
 
                //Collisions
                BallCollisionWithBlocks(dt);
@@ -222,7 +231,6 @@ void Game::DrawGame(float dt, float fps){
      static std::string fpsString;
      int fpsInt = (int)fps;
      fpsString = std::to_string(fpsInt);
-
      if(showFPS){
           render_text(renderer, &FPSFont, &fpsString, V2{0, (float)window->internalHeight}, V3{0.0f,1.0f,0.0f});
      }
@@ -234,7 +242,10 @@ void Game::DrawGame(float dt, float fps){
      }
 
 
-     ball.Draw(renderer);
+     for(int i = 0; i < balls.size(); i++){
+          balls[i].Draw(renderer);
+
+     }
      paddle.Draw(renderer);
      for(int i = 0; i < powerUpsOnScreen.size(); i++){
           powerUpsOnScreen[i].Draw(renderer);
@@ -268,30 +279,44 @@ void Game::DoEvents(){
      }
 }
 
-void Game::CheckIfBallWentBelowPaddle(){
-     if(ball.boundingBox.y < 0){
-          ball.state = BallState::ON_PADDLE;
-          powerUpFlags = 0;
-          powerUpProbability = powerUpInitialProbability;
+void Game::ResetPowerUpsAndBallIfBallFalls(){
+     if(balls.size() == 1){
+          if(balls[0].boundingBox.y < 0){
+               balls[0].state = BallState::ON_PADDLE;
+               balls[0].ResetSpeed();
+               powerUpFlags = 0;
+               powerUpProbability = powerUpInitialProbability;
 
-          paddle.ResetSize();
+               paddle.ResetSize();
+          }
+
+     }else if(balls.size() > 1){
+          for(int i = 0; i < balls.size(); i++){
+               if(balls[i].boundingBox.y < 0){
+                    balls.erase(balls.begin() + i);
+               }
+
+          }
      }
 }
 
 
 void Game::MaybeLaunchBall(){
-     if(ball.state == BallState::ON_PADDLE || ball.state == BallState::ON_CATCH){
-          if(powerUpFlags & PowerUpType::POWER_CATCH){
-               catchTimer.Tick();
-          }
+     for(int i = 0; i < balls.size(); i++){
+          if(balls[i].state == BallState::ON_PADDLE || balls[i].state == BallState::ON_CATCH){
+               if(powerUpFlags & PowerUpType::POWER_CATCH){
+                    balls[i].catchTimer.Tick();
+               }
 
-          printf("time: %f\n", catchTimer.timeCount);
-          if(IsKeyPressed(window, GLFW_KEY_SPACE) || catchTimer.isTimeReached){
-               float bounceCoefficient = CalculateBallBounceCoefficient();
+               // printf("time: %f\n", catchTimer.timeCount);
+               if(IsKeyPressed(window, GLFW_KEY_SPACE) || balls[i].catchTimer.isTimeReached){
+                    float bounceCoefficient = CalculateBallBounceCoefficient(&balls[i]);
 
-               ball.velocity.x = ball.speed * bounceCoefficient;
-               ball.velocity.y = ball.speed;
-               ball.state = BallState::MOVING;
+                    balls[i].velocity.x = balls[i].speed * bounceCoefficient;
+                    balls[i].velocity.y = balls[i].speed;
+                    balls[i].state = BallState::MOVING;
+               }
+
           }
 
      }
@@ -365,34 +390,40 @@ void Game::BallCollisionWithBlocks(float dt){
           for(int x = 0; x < Level::levelWidth; x++){
                int index = (Level::levelWidth * y) + x;
                if(blockStateMap[index]){
-                    if(DoRectsCollide(ball.boundingBox, blocksBoundingBoxes[index], &penetration)){
-                         //Black blocks are indestructible.
-                         if(currentLevel->layout[index] != Blocks::BLOCKS_BLACK){
-                              blockStateMap[index] = 0;
-                              numberOfBlocksToWin--;
+                    for(int i = 0; i < balls.size(); i++){
+                         if(DoRectsCollide(balls[i].boundingBox, blocksBoundingBoxes[index], &penetration)){
+                              //Black blocks are indestructible.
+                              if(currentLevel->layout[index] != Blocks::BLOCKS_BLACK){
+                                   blockStateMap[index] = 0;
+                                   numberOfBlocksToWin--;
 
-                              int powerChance = rand() % 100;
-                              // printf("Chance %d\n", powerChance);
-                              if(powerChance < powerUpProbability){
-                                   int power = (rand() % PowerUpType::POWER_COUNT);
-                                   int finalPower = 1 << power;
-                                   PowerUp selectedPowerUp = CreatePowerUp((PowerUpType)finalPower, {ball.boundingBox.x,ball.boundingBox.y});
-                                   // printf("Power granted: %d\n\n", finalPower);
-                                   // printf("Type: %x\n",selectedPowerUp.type);
-                                   powerUpsOnScreen.push_back(selectedPowerUp);
+                                   int powerChance = rand() % 100;
+                                   // printf("Chance %d\n", powerChance);
+                                   if(powerChance < powerUpProbability){
+                                        int power = (rand() % PowerUpType::POWER_COUNT);
+                                        int finalPower = 1 << power;
+                                        PowerUp selectedPowerUp = CreatePowerUp((PowerUpType)finalPower, {balls[i].boundingBox.x,balls[i].boundingBox.y});
+                                        // printf("Power granted: %d\n\n", finalPower);
+                                        // printf("Type: %x\n",selectedPowerUp.type);
+                                        powerUpsOnScreen.push_back(selectedPowerUp);
+                                   }
+                                   powerUpProbability += 50;
+
+                                   balls[i].SpeedUp();
+                                   // printf("%f\n", ball.speed);
                               }
-                              powerUpProbability += 50;
+                              balls[i].Bounce(penetration);
+                              return; //Thiis is done so that you can't destroy many blocks at the same time.
                          }
-                         ball.Bounce(penetration);
-                         return; //Thiis is done so that you can't destroy many blocks at the same time.
+
                     }
                }
           }
      }
 }
 
-float Game::CalculateBallBounceCoefficient(){
-     float ballCenter = ball.boundingBox.x + ball.boundingBox.w / 2;
+float Game::CalculateBallBounceCoefficient(Ball *ball){
+     float ballCenter = ball->boundingBox.x + ball->boundingBox.w / 2;
      float ballPositionRelativeToPaddle = ballCenter - paddle.boundingBox.x;
      float bounceCoefficient = (ballPositionRelativeToPaddle / (paddle.boundingBox.w / 2)) - 1;
      return bounceCoefficient;
@@ -400,34 +431,40 @@ float Game::CalculateBallBounceCoefficient(){
 
 void Game::BallCollisionWithPaddle(float dt){
      V2 penetration;
-     if(!ball.state == BallState::MOVING) return;
-     if(DoRectsCollide(ball.boundingBox, paddle.boundingBox, &penetration)){
-          if(powerUpFlags & PowerUpType::POWER_CATCH){
-               if(penetration.y < 0){
-                    ball.boundingBox.y -= penetration.y;
-                    ball.onCatchRelativePosition = ball.boundingBox.x - paddle.boundingBox.x;
-                    ball.state = BallState::ON_CATCH;
-                    catchTimer.timeCount = 0;
-               }else{
-                    ball.Bounce(penetration);
-               }
-          }else{
-               // ball.Bounce(penetration);
-               if(penetration.y < 0){
-                    float bounceCoefficient = CalculateBallBounceCoefficient();
-                    float bounceSpeed;
-                    // if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = ball.speed;
-                    // else bounceSpeed = 0;
+     for(int i = 0; i < balls.size(); i++){
 
-                    ball.velocity.x = ball.speed * bounceCoefficient;
-                    ball.velocity.y = ball.speed;
-               }else{
-                    ball.Bounce(penetration);
+          if(balls[i].state == BallState::MOVING){
+               if(DoRectsCollide(balls[i].boundingBox, paddle.boundingBox, &penetration)){
+                    if(powerUpFlags & PowerUpType::POWER_CATCH){
+                         if(penetration.y < 0){
+                              balls[i].boundingBox.y -= penetration.y;
+                              balls[i].onCatchRelativePosition = balls[i].boundingBox.x - paddle.boundingBox.x;
+                              balls[i].state = BallState::ON_CATCH;
+                              balls[i].speed = balls[i].defaultSpeed;
+                              balls[i].catchTimer.timeCount = 0;
+                         }else{
+                              balls[i].Bounce(penetration);
+                         }
+                    }else{
+                         // ball.Bounce(penetration);
+                         if(penetration.y < 0){
+                              float bounceCoefficient = CalculateBallBounceCoefficient(&balls[i]);
+                              float bounceSpeed;
+                              // if(bounceCoefficient > 0 || bounceCoefficient < 0) bounceSpeed = ball.speed;
+                              // else bounceSpeed = 0;
+
+                              balls[i].velocity.x = balls[i].speed * bounceCoefficient;
+                              balls[i].velocity.y = balls[i].speed;
+                         }else{
+                              balls[i].Bounce(penetration);
+                         }
+
+                    }
+
+
                }
 
           }
-
-
      }
 }
 
@@ -442,10 +479,39 @@ void Game::PowerUpCollisionWithPaddle(){
                }
 
                if(p->type == PowerUpType::POWER_SLOW){
-                    ball.speed -= ball.speed * 0.5f;
-                    ball.velocity.x *= 0.5f;
-                    ball.velocity.y *= 0.5f;
+                    for(int i = 0; i < balls.size(); i++){
+                         balls[i].speed -= balls[i].speed * 0.5f;
+                         balls[i].velocity.x *= 0.5f;
+                         balls[i].velocity.y *= 0.5f;
+
+                    }
                }
+
+               if(p->type == PowerUpType::POWER_DISRUPTION){
+                    Ball newBall;
+                    Ball newBall1;
+                    V2 position = {balls[0].boundingBox.x, balls[0].boundingBox.y};
+                    newBall.Init(position, arkanoidTexture);
+                    newBall1.Init(position, arkanoidTexture);
+
+                    float speedBall = (rand() % ((int)balls[0].speed - 199)) + 201;
+                    float speedBall1 = -(rand() % ((int)balls[0].speed - 199)) + 201;
+                    newBall.speed = speedBall;
+                    newBall1.speed = speedBall1;
+
+                    newBall.state = BallState::MOVING;
+                    newBall.velocity.x = newBall.speed;
+                    newBall.velocity.y = balls[0].velocity.y;
+
+                    newBall1.state = BallState::MOVING;
+                    newBall1.SetVelocityToSpeed();
+                    newBall1.SetVelocityToSpeed();
+                    // printf("%f, %f\n", speedBall, speedBall1);
+
+                    balls.push_back(newBall);
+                    balls.push_back(newBall1);
+               }
+
                powerUpsOnScreen.erase(powerUpsOnScreen.begin() + i);
           }
      }
